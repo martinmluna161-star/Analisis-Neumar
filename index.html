@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Neumar ChatRoom – Rendimiento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+:root {
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-heading: "Plus Jakarta Sans", sans-serif;
+  --font-serif: "Source Serif 4", Georgia, serif;
+
+  --cds-font-size-caption: 12px;
+  --cds-font-size-body: 14px;
+  --cds-font-size-heading: 18px;
+  --cds-font-size-title: 28px;
+  --cds-font-weight-medium: 500;
+
+  --cds-gap-xs: 4px;
+  --cds-gap-sm: 8px;
+  --cds-gap-md: 16px;
+  --cds-gap-lg: 24px;
+  --cds-gap-xl: 32px;
+  --cds-pad-xs: 6px;
+  --cds-pad-sm: 10px;
+  --cds-pad-lg: 20px;
+  --cds-radius: 12px;
+  --cds-dur-slow: .3s;
+
+  /* Brand Palette: Neumar - Grupo Martín */
+  --neumar-red: #E62429;
+  --neumar-dark: #0F1D38;
+  --neumar-blue: #0088CC;
+
+  --color-bg: #F4F6F9;
+  --color-panel: #FFFFFF;
+  --color-fg: #1E293B;
+  --color-fg-muted: #64748B;
+  --color-border-line: #E2E8F0;
+
+  --color-ok: #10B981;
+  --color-warn: #F59E0B;
+  --color-bad: #E62429;
+
+  --cds-chart-grid: #F1F5F9;
+  --cds-chart-axis: #94A3B8;
+  --cds-chart-status-critical: #E62429;
+  --cds-surface-popover: #FFFFFF;
+  --cds-border: #E2E8F0;
+  --cds-shadow-popover: 0 10px 25px -5px rgba(15, 29, 56, 0.12), 0 8px 10px -6px rgba(15, 29, 56, 0.05);
+  --cds-shadow-card: 0 4px 6px -1px rgba(15, 29, 56, 0.05), 0 2px 4px -2px rgba(15, 29, 56, 0.05);
+  --cds-text-secondary: #64748B;
+
+  --c1: #0088CC;
+  --c2: #E62429;
+  --c3: #10B981;
+  --c4: #8B5CF6;
+  --c5: #F59E0B;
+  --c6: #06B6D4;
+  --c7: #EC4899;
+  --c8: #64748B;
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0B0F19;
+    --color-panel: #151C2C;
+    --color-fg: #F8FAFC;
+    --color-fg-muted: #94A3B8;
+    --color-border-line: rgba(255, 255, 255, 0.08);
+
+    --color-ok: #34D399;
+    --color-warn: #FBBF24;
+    --color-bad: #F87171;
+
+    --cds-chart-grid: #1E293B;
+    --cds-chart-axis: #475569;
+    --cds-chart-status-critical: #F87171;
+    --cds-surface-popover: #1E293B;
+    --cds-border: #334155;
+    --cds-shadow-popover: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    --cds-shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    --cds-text-secondary: #94A3B8;
+
+    --c1: #38BDF8;
+    --c2: #F87171;
+    --c3: #34D399;
+    --c4: #A78BFA;
+    --c5: #FBBF24;
+    --c6: #22D3EE;
+    --c7: #F472B6;
+    --c8: #94A3B8;
+
+    color-scheme: dark;
+  }
+}
+
+html, body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+#dash-root {
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-block: 32px;
+  padding-left: max(20px, env(safe-area-inset-left, 0px));
+  padding-right: max(20px, env(safe-area-inset-right, 0px));
+}
+
+#dash-root b { font-weight: 700; }
+
+#dash-root .brand-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 3px solid var(--neumar-red);
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+#dash-root .brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: 0.5px;
+  color: var(--color-fg);
+}
+
+#dash-root .brand-logo .logo-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--neumar-dark);
+  border: 2px solid var(--neumar-red);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-weight: 900;
+  font-size: 1.1rem;
+}
+
+#dash-root .brand-logo span.red { color: var(--neumar-red); }
+
+#dash-root .brand-tag {
+  background: rgba(0, 136, 204, 0.12);
+  border: 1px solid var(--neumar-blue);
+  color: var(--neumar-blue);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+#dash-root .nx {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cds-gap-xl);
+  font-variant-numeric: tabular-nums;
+}
+
+#dash-root .nx h1 {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: var(--cds-font-size-title);
+  margin: 0;
+  color: var(--color-fg);
+}
+
+#dash-root .nx h2 {
+  font-family: var(--font-heading);
+  font-size: var(--cds-font-size-heading);
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#dash-root .nx h2::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 18px;
+  background: var(--neumar-red);
+  border-radius: 2px;
+}
+
+#dash-root .nx h3 {
+  font-size: var(--cds-font-size-body);
+  font-weight: 600;
+  margin: 0;
+}
+
+#dash-root .nx .sub {
+  color: var(--color-fg-muted);
+  font-size: var(--cds-font-size-body);
+  margin: var(--cds-gap-xs) 0 0;
+  max-width: 80ch;
+  line-height: 1.5;
+}
+
+#dash-root .nx .note {
+  color: var(--color-fg-muted);
+  font-size: var(--cds-font-size-caption);
+  margin: var(--cds-gap-xs) 0 var(--cds-gap-md);
+}
+
+#dash-root .nx .tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: var(--cds-gap-md);
+}
+
+#dash-root .nx .tile,
+#dash-root .nx .card {
+  background: var(--color-panel);
+  border: 1px solid var(--color-border-line);
+  border-radius: var(--cds-radius);
+  padding: var(--cds-pad-lg);
+  min-width: 0;
+  box-shadow: var(--cds-shadow-card);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#dash-root .nx .tile:hover,
+#dash-root .nx .card:hover {
+  box-shadow: 0 10px 15px -3px rgba(15, 29, 56, 0.08);
+}
+
+#dash-root .nx .tile .lbl {
+  color: var(--color-fg-muted);
+  font-size: var(--cds-font-size-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#dash-root .nx .tile .big {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: var(--cds-font-size-title);
+  line-height: 1.2;
+  margin-top: var(--cds-gap-xs);
+  color: var(--color-fg);
+}
+
+#dash-root .nx .tile .ctx {
+  color: var(--color-fg-muted);
+  font-size: var(--cds-font-size-caption);
+  margin-top: var(--cds-gap-xs);
+}
+
+#dash-root .nx .tile.alert { border-left: 4px solid var(--color-bad); }
+#dash-root .nx .tile.alert .big { color: var(--color-bad); }
+#dash-root .nx .tile.warn { border-left: 4px solid var(--color-warn); }
+#dash-root .nx .tile.warn .big { color: var(--color-warn); }
+
+#dash-root .nx .grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: var(--cds-gap-md);
+}
+
+#dash-root .nx section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cds-gap-md);
+}
+
+#dash-root .nx .tw { overflow-x: auto; }
+
+#dash-root .nx table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: var(--cds-font-size-caption);
+}
+
+#dash-root .nx th, #dash-root .nx td {
+  padding: 8px var(--cds-pad-sm);
+  text-align: right;
+  border-bottom: 1px solid var(--color-border-line);
+  white-space: nowrap;
+}
+
+#dash-root .nx th:first-child, #dash-root .nx td:first-child { text-align: left; }
+#dash-root .nx th {
+  color: var(--color-fg-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+#dash-root .nx td.bad { color: var(--color-bad); font-weight: 600; }
+#dash-root .nx td.ok { color: var(--color-ok); font-weight: 600; }
+#dash-root .nx td.warn { color: var(--color-warn); font-weight: 600; }
+
+#dash-root .nx .chart { position: relative; min-height: 240px; }
+#dash-root .nx .chart.tall { min-height: 300px; }
+
+#dash-root .nx .legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--cds-gap-xs) var(--cds-gap-md);
+  font-size: var(--cds-font-size-caption);
+  color: var(--color-fg-muted);
+  margin-bottom: var(--cds-gap-sm);
+}
+
+#dash-root .nx .legend i {
+  display: inline-block;
+  width: .6rem;
+  height: .6rem;
+  border-radius: 2px;
+  margin-right: .3rem;
+  vertical-align: baseline;
+}
+
+#dash-root .nx .tip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--cds-surface-popover);
+  border: 1px solid var(--cds-border);
+  border-radius: var(--cds-radius);
+  box-shadow: var(--cds-shadow-popover);
+  padding: 8px 12px;
+  font-size: var(--cds-font-size-caption);
+  white-space: nowrap;
+  z-index: 5;
+}
+
+#dash-root .nx .tip .h { color: var(--cds-text-secondary); font-weight: 600; }
+
+#dash-root .nx ul.find {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cds-gap-md);
+  font-size: var(--cds-font-size-body);
+  max-width: 85ch;
+  line-height: 1.6;
+}
+
+#dash-root .nx ul.find li::marker { color: var(--neumar-red); }
+
+#dash-root [data-dash-source-state=empty] { color: transparent; }
+#dash-root [data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
+</style>
+<script>
+(function(){
+const DATA={"kpis": [{"metric": "leads", "label": "Conversaciones nuevas", "value": 198}, {"metric": "leads_ads", "label": "Desde anuncios Meta", "value": 186}, {"metric": "first_med", "label": "Mediana 1ª respuesta (min hábiles)", "value": 9.8}, {"metric": "first_p90", "label": "P90 1ª respuesta (min hábiles)", "value": 39.6}, {"metric": "first_le15", "label": "% 1ª respuesta ≤15 min", "value": 64}, {"metric": "ooh", "label": "Leads fuera de horario", "value": 95}, {"metric": "ooh_wait_h", "label": "Espera mediana fuera de horario (h reales)", "value": 12}, {"metric": "inhours_med", "label": "Mediana 1ª respuesta en horario (min)", "value": 6.1}, {"metric": "quoted", "label": "Conversaciones cotizadas", "value": 82}, {"metric": "quotes_odoo", "label": "Presupuestos Odoo de leads del chat", "value": 75}, {"metric": "quote_amt", "label": "Monto presupuestado ($)", "value": 61713044}, {"metric": "followup", "label": "Cotizadas con seguimiento", "value": 7}, {"metric": "cold_quoted", "label": "Cotizadas sin seguimiento (+48h)", "value": 51}, {"metric": "unassigned", "label": "Conversaciones sin agente asignado", "value": 160}, {"metric": "convs", "label": "Conversaciones totales", "value": 200}, {"metric": "sales_linked", "label": "Ventas confirmadas vinculadas al chat", "value": 1}], "operadores": [{"operador": "Tomás Palomino", "conv": 80, "msgs": 459, "respuestas": 326, "med_resp": 3.3, "p90_resp": 18.6, "med_primera": 8.1, "pct_le5": 58, "pct_le15": 84, "pct_gt60": 2, "presup": 30, "monto_presup": 16492328, "saludo": 86, "pide_nombre": 84, "pide_medida": 53, "cotiza": 40, "invita_cierre": 19, "seguimiento": 4, "msgs_conv": 5.7}, {"operador": "Mariano Fernández", "conv": 77, "msgs": 330, "respuestas": 209, "med_resp": 8.5, "p90_resp": 81.7, "med_primera": 10, "pct_le5": 42, "pct_le15": 60, "pct_gt60": 13, "presup": 28, "monto_presup": 24853451, "saludo": 73, "pide_nombre": 73, "pide_medida": 18, "cotiza": 38, "invita_cierre": 17, "seguimiento": 6, "msgs_conv": 4.3}, {"operador": "Rodrigo Cozzolino", "conv": 19, "msgs": 117, "respuestas": 57, "med_resp": 8, "p90_resp": 61.6, "med_primera": 9.8, "pct_le5": 37, "pct_le15": 72, "pct_gt60": 11, "presup": 12, "monto_presup": 10624635, "saludo": 79, "pide_nombre": 68, "pide_medida": 32, "cotiza": 53, "invita_cierre": 11, "seguimiento": 37, "msgs_conv": 6.2}, {"operador": "Lautaro Cadelago", "conv": 9, "msgs": 51, "respuestas": 31, "med_resp": 9, "p90_resp": 47.3, "med_primera": 5.4, "pct_le5": 42, "pct_le15": 61, "pct_gt60": 3, "presup": 8, "monto_presup": 6398550, "saludo": 78, "pide_nombre": 78, "pide_medida": 33, "cotiza": 78, "invita_cierre": 11, "seguimiento": 0, "msgs_conv": 5.7}, {"operador": "Gonzalo Gatica", "conv": 8, "msgs": 58, "respuestas": 31, "med_resp": 21.8, "p90_resp": 80.3, "med_primera": 25.4, "pct_le5": 32, "pct_le15": 39, "pct_gt60": 16, "presup": 4, "monto_presup": 3344080, "saludo": 38, "pide_nombre": 38, "pide_medida": 50, "cotiza": 50, "invita_cierre": 25, "seguimiento": 0, "msgs_conv": 7.3}], "campanas": [{"campana": "4 cubiertas $40.000/mes (BNA)", "formato": "Video", "anuncios": 5, "leads": 76, "respondidos": 74, "med_primera": 7.9, "presupuestos": 29, "monto_presup": 21535971, "cerro_sin_resp": 15, "msgs_cliente": 408}, {"campana": "Financiación 12 cuotas s/interés", "formato": "Imagen", "anuncios": 9, "leads": 36, "respondidos": 35, "med_primera": 14.1, "presupuestos": 14, "monto_presup": 12472080, "cerro_sin_resp": 6, "msgs_cliente": 145}, {"campana": "12 cuotas Mercado Pago", "formato": "Imagen", "anuncios": 3, "leads": 27, "respondidos": 27, "med_primera": 10, "presupuestos": 13, "monto_presup": 9417840, "cerro_sin_resp": 0, "msgs_cliente": 149}, {"campana": "Promo BNA", "formato": "Imagen", "anuncios": 1, "leads": 24, "respondidos": 24, "med_primera": 15, "presupuestos": 12, "monto_presup": 12777265, "cerro_sin_resp": 5, "msgs_cliente": 125}, {"campana": "Orgánico (sin anuncio)", "formato": "—", "anuncios": 0, "leads": 14, "respondidos": 10, "med_primera": 1.9, "presupuestos": 0, "monto_presup": 0, "cerro_sin_resp": 2, "msgs_cliente": 105}, {"campana": "Viajes – 10 cuotas", "formato": "Imagen", "anuncios": 2, "leads": 11, "respondidos": 11, "med_primera": 2.6, "presupuestos": 4, "monto_presup": 2139600, "cerro_sin_resp": 1, "msgs_cliente": 69}, {"campana": "Tren delantero + cubiertas", "formato": "Video", "anuncios": 1, "leads": 10, "respondidos": 10, "med_primera": 16.2, "presupuestos": 2, "monto_presup": 1837288, "cerro_sin_resp": 1, "msgs_cliente": 46}, {"campana": "Banco Supervielle", "formato": "Imagen", "anuncios": 2, "leads": 2, "respondidos": 2, "med_primera": 1.2, "presupuestos": 1, "monto_presup": 1533000, "cerro_sin_resp": 0, "msgs_cliente": 6}], "leads_diarios": [{"dia": "2026-10-07", "campana": "Orgánico (sin anuncio)", "leads": 3}, {"dia": "2026-10-07", "campana": "12 cuotas Mercado Pago", "leads": 1}, {"dia": "2026-10-08", "campana": "Promo BNA", "leads": 3}, {"dia": "2026-10-08", "campana": "Orgánico (sin anuncio)", "leads": 3}, {"dia": "2026-10-08", "campana": "4 cubiertas $40.000/mes (BNA)", "leads": 4}, {"dia": "2026-10-08", "campana": "12 cuotas Mercado Pago", "leads": 1}, {"dia": "2026-10-09", "campana": "4 cubiertas $40.000/mes (BNA)", "leads": 7}, {"dia": "2026-10-09", "campana": "Financiación 12 cuotas s/interés", "leads": 2}, {"dia": "2026-10-09", "campana": "12 cuotas Mercado Pago", "leads": 2}, {"dia": "2026-10-09", "campana": "Orgánico (sin anuncio)", "leads": 2}, {"dia": "2026-10-09", "campana": "Viajes – 10 cuotas", "leads": 2}, {"dia": "2026-10-10", "campana": "4 cubiertas $40.000/mes (BNA)", "leads": 6}, {"dia": "2026-10-10", "campana": "Financiación 12 cuotas s/interés", "leads": 2}, {"dia": "2026-10-10", "campana": "Viajes – 10 cuotas", "leads": 5}, {"dia": "2026-10-10", "campana": "Banco Supervielle", "leads": 1}, {"dia": "2026-10-10", "campana": "Tren delantero + cubiertas", "leads": 1}, {"dia": "2026-10-10", "campana": "12 cuotas Mercado Pago", "leads": 1}, {"dia": "2026-10-11", "campana": "12 cuotas Mercado Pago", "leads": 1}, {"dia": "2026-10-11", "campana": "Tren delantero + cubiertas", "leads": 1}, {"dia": "2026-10-11", "campana": "4 cubiertas $40.000/mes (BNA)", "leads": 2}, {"dia": "2026-10-11", "campana": "Orgánico (sin anuncio)", "leads": 1}, {"dia": "2026-10-11", "campana": "Promo BNA", "leads": 2}, {"dia": "2026-10-12", "campana": "Viajes – 10 cuotas", "leads": 2}, {"dia": "2026-10-12", "campana": "12 cuotas Mercado Pago", "leads": 2}, {"dia": "2026-10-12", "campana": "Promo BNA", "leads": 1}, {"dia": "2026-10-12", "campana": "4 cubiertas $40.000/mes (BNA)", "leads": 2}, {"dia": "2026-10-13", "campana": "Promo BNA", "leads": 2}, {"dia": "2026-10-13", "campana": "12 cuotas Mercado Pago", "leads": 3}, {"dia": "2026-10-13", "campana": "4 cubiertas $40.000/mes (BNA)", "leads": 11}, {"dia": "2026-10-13", "campana": "Tren delantero + cubiertas", "leads": 2}, {"dia": "2026-10-13", "campana": "Financiación 12 cuotas s/interés", "leads": 6}, {"dia": "2026-10-13", "campana": "Orgánico (sin anuncio)", "leads": 1}, {"dia": "2026-10-14", "campana": "Promo BNA", "leads": 2}, {"dia": "2026-10-14", "campana": "12 cuotas Mercado Pago", "leads": 4}, {"dia": "2026-10-14", "campana": "4 cubiertas $40.000/mes (BNA)", "leads": 8}, {"dia": "2026-10-14", "campana": "Financiación 12 cuotas s/interés", "leads": 9}, {"dia": "2026-10-14", "campana": "Tren delantero + cubiertas", "leads": 2}, {"dia": "2026-10-14", "campana": "Orgánico (sin anuncio)", "leads": 1}, {"dia": "2026-10-15", "campana": "4 cubiertas $40.000/mes (BNA)", "leads": 3}, {"dia": "2026-10-15", "campana": "Tren delantero + cubiertas", "leads": 2}, {"dia": "2026-10-15", "campana": "Promo BNA", "leads": 4}, {"dia": "2026-10-15", "campana": "12 cuotas Mercado Pago", "leads": 4}, {"dia": "2026-10-15", "campana": "Financiación 12 cuotas s/interés", "leads": 1}, {"dia": "2026-10-16", "campana": "Promo BNA", "leads": 2}, {"dia": "2026-10-16", "campana": "Financiación 12 cuotas s/interés", "leads": 5}, {"dia": "2026-10-16", "campana": "12 cuotas Mercado Pago", "leads": 1}, {"dia": "2026-10-16", "campana": "Orgánico (sin anuncio)", "leads": 1}, {"dia": "2026-10-16", "campana": "Tren delantero + cubiertas", "leads": 1}, {"dia": "2026-10-16", "campana": "4 cubiertas $40.000/mes (BNA)", "leads": 5}, {"dia": "2026-10-16", "campana": "Viajes – 10 cuotas", "leads": 1}, {"dia": "2026-10-17", "campana": "12 cuotas Mercado Pago", "leads": 3}, {"dia": "2026-10-17", "campana": "4 cubiertas $40.000/mes (BNA)", "leads": 3}, {"dia": "2026-10-17", "campana": "Financiación 12 cuotas s/interés", "leads": 2}, {"dia": "2026-10-17", "campana": "Promo BNA", "leads": 1}, {"dia": "2026-10-18", "campana": "Financiación 12 cuotas s/interés", "leads": 1}, {"dia": "2026-10-18", "campana": "4 cubiertas $40.000/mes (BNA)", "leads": 3}, {"dia": "2026-10-18", "campana": "12 cuotas Mercado Pago", "leads": 1}, {"dia": "2026-10-18", "campana": "Tren delantero + cubiertas", "leads": 1}, {"dia": "2026-10-19", "campana": "4 cubiertas $40.000/mes (BNA)", "leads": 7}, {"dia": "2026-10-19", "campana": "12 cuotas Mercado Pago", "leads": 2}, {"dia": "2026-10-19", "campana": "Financiación 12 cuotas s/interés", "leads": 2}, {"dia": "2026-10-19", "campana": "Promo BNA", "leads": 4}, {"dia": "2026-10-20", "campana": "4 cubiertas $40.000/mes (BNA)", "leads": 15}, {"dia": "2026-10-20", "campana": "Financiación 12 cuotas s/interés", "leads": 6}, {"dia": "2026-10-20", "campana": "Promo BNA", "leads": 3}, {"dia": "2026-10-20", "campana": "Viajes – 10 cuotas", "leads": 1}, {"dia": "2026-10-20", "campana": "12 cuotas Mercado Pago", "leads": 1}, {"dia": "2026-10-20", "campana": "Banco Supervielle", "leads": 1}], "respuesta_hora": [{"hora": 0, "respuestas": 8, "med_min": 15.1}, {"hora": 1, "respuestas": 5, "med_min": 12.6}, {"hora": 5, "respuestas": 4, "med_min": 13.5}, {"hora": 6, "respuestas": 1, "med_min": 12.1}, {"hora": 7, "respuestas": 12, "med_min": 11.4}, {"hora": 8, "respuestas": 111, "med_min": 2.8}, {"hora": 9, "respuestas": 86, "med_min": 3.2}, {"hora": 10, "respuestas": 74, "med_min": 9.1}, {"hora": 11, "respuestas": 56, "med_min": 5.5}, {"hora": 12, "respuestas": 49, "med_min": 3.7}, {"hora": 13, "respuestas": 46, "med_min": 3.6}, {"hora": 14, "respuestas": 52, "med_min": 5.2}, {"hora": 15, "respuestas": 29, "med_min": 2.6}, {"hora": 16, "respuestas": 18, "med_min": 6.4}, {"hora": 17, "respuestas": 40, "med_min": 2.7}, {"hora": 18, "respuestas": 19, "med_min": 13}, {"hora": 19, "respuestas": 11, "med_min": 9.3}, {"hora": 20, "respuestas": 12, "med_min": 14.3}, {"hora": 21, "respuestas": 11, "med_min": 15.6}, {"hora": 22, "respuestas": 3, "med_min": 12.3}, {"hora": 23, "respuestas": 7, "med_min": 15.1}], "calor": [{"dia_semana": 3, "hora": 16, "mensajes": 6}, {"dia_semana": 3, "hora": 18, "mensajes": 5}, {"dia_semana": 3, "hora": 21, "mensajes": 3}, {"dia_semana": 4, "hora": 0, "mensajes": 1}, {"dia_semana": 4, "hora": 10, "mensajes": 17}, {"dia_semana": 4, "hora": 11, "mensajes": 18}, {"dia_semana": 4, "hora": 14, "mensajes": 16}, {"dia_semana": 4, "hora": 16, "mensajes": 6}, {"dia_semana": 4, "hora": 17, "mensajes": 9}, {"dia_semana": 4, "hora": 18, "mensajes": 6}, {"dia_semana": 4, "hora": 19, "mensajes": 3}, {"dia_semana": 4, "hora": 20, "mensajes": 3}, {"dia_semana": 5, "hora": 0, "mensajes": 2}, {"dia_semana": 5, "hora": 1, "mensajes": 3}, {"dia_semana": 5, "hora": 8, "mensajes": 32}, {"dia_semana": 5, "hora": 9, "mensajes": 29}, {"dia_semana": 5, "hora": 10, "mensajes": 9}, {"dia_semana": 5, "hora": 11, "mensajes": 23}, {"dia_semana": 5, "hora": 12, "mensajes": 12}, {"dia_semana": 5, "hora": 13, "mensajes": 6}, {"dia_semana": 5, "hora": 14, "mensajes": 5}, {"dia_semana": 5, "hora": 15, "mensajes": 5}, {"dia_semana": 5, "hora": 16, "mensajes": 5}, {"dia_semana": 5, "hora": 19, "mensajes": 10}, {"dia_semana": 5, "hora": 20, "mensajes": 5}, {"dia_semana": 6, "hora": 7, "mensajes": 1}, {"dia_semana": 6, "hora": 8, "mensajes": 27}, {"dia_semana": 6, "hora": 9, "mensajes": 24}, {"dia_semana": 6, "hora": 10, "mensajes": 18}, {"dia_semana": 6, "hora": 11, "mensajes": 7}, {"dia_semana": 6, "hora": 12, "mensajes": 14}, {"dia_semana": 6, "hora": 13, "mensajes": 3}, {"dia_semana": 6, "hora": 14, "mensajes": 6}, {"dia_semana": 6, "hora": 15, "mensajes": 3}, {"dia_semana": 6, "hora": 16, "mensajes": 4}, {"dia_semana": 6, "hora": 17, "mensajes": 4}, {"dia_semana": 6, "hora": 18, "mensajes": 6}, {"dia_semana": 6, "hora": 20, "mensajes": 2}, {"dia_semana": 6, "hora": 21, "mensajes": 4}, {"dia_semana": 6, "hora": 22, "mensajes": 1}, {"dia_semana": 0, "hora": 9, "mensajes": 1}, {"dia_semana": 0, "hora": 11, "mensajes": 1}, {"dia_semana": 0, "hora": 12, "mensajes": 4}, {"dia_semana": 0, "hora": 13, "mensajes": 1}, {"dia_semana": 0, "hora": 16, "mensajes": 2}, {"dia_semana": 0, "hora": 18, "mensajes": 2}, {"dia_semana": 0, "hora": 20, "mensajes": 2}, {"dia_semana": 0, "hora": 21, "mensajes": 2}, {"dia_semana": 1, "hora": 0, "mensajes": 1}, {"dia_semana": 1, "hora": 10, "mensajes": 12}, {"dia_semana": 1, "hora": 12, "mensajes": 5}, {"dia_semana": 1, "hora": 13, "mensajes": 3}, {"dia_semana": 1, "hora": 15, "mensajes": 11}, {"dia_semana": 1, "hora": 17, "mensajes": 8}, {"dia_semana": 1, "hora": 19, "mensajes": 3}, {"dia_semana": 1, "hora": 20, "mensajes": 6}, {"dia_semana": 1, "hora": 23, "mensajes": 6}, {"dia_semana": 2, "hora": 7, "mensajes": 2}, {"dia_semana": 2, "hora": 8, "mensajes": 73}, {"dia_semana": 2, "hora": 9, "mensajes": 36}, {"dia_semana": 2, "hora": 10, "mensajes": 30}, {"dia_semana": 2, "hora": 11, "mensajes": 39}, {"dia_semana": 2, "hora": 12, "mensajes": 7}, {"dia_semana": 2, "hora": 13, "mensajes": 39}, {"dia_semana": 2, "hora": 14, "mensajes": 33}, {"dia_semana": 2, "hora": 15, "mensajes": 29}, {"dia_semana": 2, "hora": 16, "mensajes": 9}, {"dia_semana": 2, "hora": 17, "mensajes": 38}, {"dia_semana": 2, "hora": 18, "mensajes": 7}, {"dia_semana": 2, "hora": 19, "mensajes": 3}, {"dia_semana": 2, "hora": 20, "mensajes": 5}, {"dia_semana": 2, "hora": 23, "mensajes": 1}, {"dia_semana": 3, "hora": 0, "mensajes": 4}, {"dia_semana": 3, "hora": 1, "mensajes": 1}, {"dia_semana": 3, "hora": 5, "mensajes": 1}, {"dia_semana": 3, "hora": 7, "mensajes": 7}, {"dia_semana": 3, "hora": 8, "mensajes": 17}, {"dia_semana": 3, "hora": 9, "mensajes": 18}, {"dia_semana": 3, "hora": 10, "mensajes": 34}, {"dia_semana": 3, "hora": 11, "mensajes": 6}, {"dia_semana": 3, "hora": 12, "mensajes": 9}, {"dia_semana": 3, "hora": 13, "mensajes": 21}, {"dia_semana": 3, "hora": 14, "mensajes": 23}, {"dia_semana": 3, "hora": 15, "mensajes": 2}, {"dia_semana": 3, "hora": 17, "mensajes": 8}, {"dia_semana": 3, "hora": 19, "mensajes": 1}, {"dia_semana": 4, "hora": 1, "mensajes": 1}, {"dia_semana": 4, "hora": 5, "mensajes": 1}, {"dia_semana": 4, "hora": 6, "mensajes": 1}, {"dia_semana": 4, "hora": 7, "mensajes": 2}, {"dia_semana": 4, "hora": 8, "mensajes": 6}, {"dia_semana": 4, "hora": 9, "mensajes": 6}, {"dia_semana": 4, "hora": 12, "mensajes": 20}, {"dia_semana": 4, "hora": 13, "mensajes": 5}, {"dia_semana": 4, "hora": 21, "mensajes": 2}, {"dia_semana": 4, "hora": 22, "mensajes": 1}, {"dia_semana": 5, "hora": 5, "mensajes": 1}, {"dia_semana": 5, "hora": 21, "mensajes": 1}, {"dia_semana": 5, "hora": 23, "mensajes": 4}, {"dia_semana": 6, "hora": 0, "mensajes": 1}, {"dia_semana": 6, "hora": 1, "mensajes": 2}, {"dia_semana": 6, "hora": 5, "mensajes": 1}, {"dia_semana": 0, "hora": 7, "mensajes": 1}, {"dia_semana": 0, "hora": 14, "mensajes": 1}, {"dia_semana": 0, "hora": 17, "mensajes": 1}, {"dia_semana": 1, "hora": 7, "mensajes": 4}, {"dia_semana": 1, "hora": 8, "mensajes": 25}, {"dia_semana": 1, "hora": 9, "mensajes": 10}, {"dia_semana": 1, "hora": 11, "mensajes": 3}, {"dia_semana": 1, "hora": 14, "mensajes": 2}, {"dia_semana": 1, "hora": 16, "mensajes": 4}, {"dia_semana": 1, "hora": 18, "mensajes": 6}, {"dia_semana": 1, "hora": 21, "mensajes": 2}, {"dia_semana": 1, "hora": 22, "mensajes": 1}, {"dia_semana": 2, "hora": 0, "mensajes": 1}, {"dia_semana": 2, "hora": 21, "mensajes": 1}]};
+const calcs={},subs=[];
+window.dash={
+ get colors(){const cs=getComputedStyle(document.documentElement);return [1,2,3,4,5,6,7,8].map(i=>cs.getPropertyValue('--c'+i).trim());},
+ data(id){if(DATA[id])return{status:'ok',data:DATA[id]};const c=calcs[id];if(c){if(!c.v)c.v=c.fn(...c.inputs.map(i=>dash.data(i).data));return{status:'ok',data:c.v};}return{status:'missing',data:[]};},
+ calc(id,o){calcs[id]={fn:o.fn,inputs:o.inputs};},
+ onData(fn){subs.push(fn);if(document.readyState!=='loading')fn();}
+};
+const run=()=>subs.forEach(f=>f());
+document.addEventListener('DOMContentLoaded',run);
+let t;window.addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(run,150);});
+})();
+</script>
+</head>
+<body>
+<div id="dash-root">
+  <div class="brand-header">
+    <div class="brand-logo">
+      <div class="logo-icon">N</div>
+      NEU<span class="red">MAR</span>
+    </div>
+    <div class="brand-tag">Grupo Martín</div>
+  </div>
+
+  <div class="nx">
+    <header id="top">
+      <h1>ChatRoom WhatsApp – Rendimiento</h1>
+      <p class="sub">Del 7 al 20 de octubre de 2026. Tiempos medidos en minutos hábiles (Lun–Vie 8–18 h, Sáb 8–13 h; excluye domingos y feriados).</p>
+      <p class="sub" id="takeaway" data-source="kpis">—</p>
+    </header>
+
+    <div class="tiles" id="kpis">
+      <div class="tile"><div class="lbl">Leads nuevos</div><div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=leads">—</div><div class="ctx"><span data-source="kpis" data-field="value" data-where="metric=leads_ads">—</span> desde anuncios Meta</div></div>
+      <div class="tile"><div class="lbl">1ª respuesta (mediana)</div><div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=first_med">—</div><div class="ctx">P90: <span data-source="kpis" data-field="value" data-where="metric=first_p90">—</span> min hábiles</div></div>
+      <div class="tile"><div class="lbl">Respondidos ≤15 min</div><div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=first_le15">—</div><div class="ctx">primera respuesta</div></div>
+      <div class="tile warn"><div class="lbl">Leads fuera de horario</div><div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=ooh">—</div><div class="ctx">esperan <span data-source="kpis" data-field="value" data-where="metric=ooh_wait_h">—</span> h reales (mediana)</div></div>
+      <div class="tile"><div class="lbl">Monto presupuestado</div><div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=quote_amt">—</div><div class="ctx"><span data-source="kpis" data-field="value" data-where="metric=quotes_odoo">—</span> presupuestos Odoo</div></div>
+      <div class="tile alert"><div class="lbl">Cotizados sin seguimiento</div><div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=cold_quoted">—</div><div class="ctx">de <span data-source="kpis" data-field="value" data-where="metric=quoted">—</span> conversaciones cotizadas</div></div>
+    </div>
+
+    <section id="campanas">
+      <h2>Campañas</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Leads por día y campaña</h3>
+          <p class="note">Conversaciones nuevas según el anuncio que las originó (referral de Meta).</p>
+          <div class="legend" id="legDaily" data-source="leads_diarios"></div>
+          <div class="chart dash-skeleton" id="chDaily" data-source="leads_diarios"></div>
+        </div>
+        <div class="card">
+          <h3>Rendimiento por campaña</h3>
+          <p class="note">Tasa de presupuesto = leads con presupuesto en Odoo / total leads.</p>
+          <div class="tw"><table id="tCamp" data-source="campanas" data-row-key="campana">
+            <thead><tr><th data-field="campana">Campaña</th><th data-field="formato">Formato</th><th data-field="leads">Leads</th><th data-field="med_primera">1ª resp. (min)</th><th data-field="presupuestos">Presup.</th><th data-source="camp_calc" data-field="tasa_presup">Tasa</th><th data-field="monto_presup">Monto</th><th data-source="camp_calc" data-field="ticket">$/lead</th></tr></thead>
+            <tbody></tbody></table></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="operadores">
+      <h2>Ranking de operadores</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Puntaje de atención (0–100)</h3>
+          <p class="note">Velocidad 35% · Calidad del guion 40% · Seguimiento 15% · Volumen 10%. Gonzalo y Lautaro tienen &lt;10 conversaciones: leer con cautela.</p>
+          <div class="legend" id="legRank" data-source="ranking"></div>
+          <div class="chart" id="chRank" data-source="ranking" style="min-height:220px"></div>
+        </div>
+        <div class="card">
+          <h3>Tiempos y volumen</h3>
+          <p class="note">Respuesta = minutos hábiles desde que el cliente escribe hasta la respuesta del operador.</p>
+          <div class="tw"><table id="tOps" data-source="operadores" data-row-key="operador">
+            <thead><tr><th data-field="operador">Operador</th><th data-field="conv">Conv.</th><th data-field="med_primera">1ª resp.</th><th data-field="med_resp">Mediana</th><th data-field="p90_resp">P90</th><th data-field="pct_le15">≤15 min</th><th data-field="pct_gt60">&gt;60 min</th><th data-field="presup">Presup.</th><th data-field="monto_presup">Monto</th></tr></thead>
+            <tbody></tbody></table></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Calidad del guion de atención</h3>
+        <p class="note">% de conversaciones de cada operador donde aparece cada paso (detectado por texto de los mensajes).</p>
+        <div class="tw"><table id="tQual" data-source="operadores" data-row-key="operador">
+          <thead><tr><th data-field="operador">Operador</th><th data-field="saludo">Saluda y se presenta</th><th data-field="pide_nombre">Pide nombre</th><th data-field="pide_medida">Pide medida / vehículo</th><th data-field="cotiza">Envía cotización</th><th data-field="invita_cierre">Invita a sucursal / turno</th><th data-field="seguimiento">Hace seguimiento</th><th data-field="msgs_conv">Msj / conv.</th></tr></thead>
+          <tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="tiempos">
+      <h2>Cuándo escriben y cuánto esperan</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Espera mediana según hora en que escribe el cliente</h3>
+          <p class="note">Minutos hábiles. Fuera de horario la cuenta arranca al abrir, por lo que la espera real es de varias horas.</p>
+          <div class="chart" id="chHour" data-source="respuesta_hora"></div>
+        </div>
+        <div class="card">
+          <h3>Mensajes entrantes por día y hora</h3>
+          <p class="note">Mensajes de clientes en las dos semanas. Más oscuro = mayor volumen.</p>
+          <div class="chart" id="chHeat" data-source="calor"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="hallazgos">
+      <h2>Hallazgos y próximos pasos</h2>
+      <div class="card">
+        <ul class="find">
+          <li><b>La campaña de 4 cubiertas a $40.000/mes (video) es el motor principal:</b> genera más leads que cualquier otra y acumula el mayor monto presupuestado. Las de Mercado Pago y Promo BNA logran mejor tasa de cotización por lead.</li>
+          <li><b>El cuello de botella está en el seguimiento comercial, no en la primera respuesta:</b> casi ninguna conversación cotizada recibe un segundo contacto; la mayoría finaliza en un "gracias" del cliente sin un cierre concretado. Proponer: recontacto a las 24 h y 72 h mediante plantillas y tareas automáticas en Odoo.</li>
+          <li><b>Dificultad para medir ventas por campaña:</b> la mayoría de los presupuestos del chat permanecen en estado borrador y las ventas confirmadas no quedan vinculadas al contacto de WhatsApp. Confirmar presupuestos en Odoo (o asociar el cliente) habilitará medir el ROI exacto por anuncio.</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+const fmtN=d3.format(',');
+const money=v=>'$'+new Intl.NumberFormat('es-AR',{notation:'compact',maximumFractionDigits:1}).format(v);
+const moneyFull=v=>'$'+new Intl.NumberFormat('es-AR',{maximumFractionDigits:0}).format(v);
+window.__nx={fmtN,money,moneyFull};
+dash.calc('camp_calc',{inputs:['campanas'],title:'Tasa de presupuesto por campaña',
+  fn:(campanas)=>campanas.map(r=>({campana:r.campana,tasa_presup:r.leads?r.presupuestos/r.leads:0,ticket:r.leads?Math.round(r.monto_presup/r.leads):0}))});
+dash.calc('ranking',{inputs:['operadores'],title:'Puntaje de atención',
+  fn:(operadores)=>{const mx=Math.max(...operadores.map(o=>o.conv));return operadores.map(o=>{const vel=0.5*o.pct_le15+0.5*Math.max(0,100-4*o.med_resp);const cal=(o.saludo+o.pide_nombre+o.pide_medida+o.cotiza+o.invita_cierre)/5;const vol=100*o.conv/mx;const p={velocidad:0.35*vel,calidad:0.40*cal,seguimiento:0.15*o.seguimiento,volumen:0.10*vol};return {operador:o.operador,...p,puntaje:Math.round(p.velocidad+p.calidad+p.seguimiento+p.volumen)};}).sort((a,b)=>b.puntaje-a.puntaje);}});
+})();
+</script>
+<script>
+(function(){
+const {fmtN,money}=window.__nx;
+const fm={leads:fmtN,leads_ads:fmtN,first_med:v=>v+' min',first_p90:v=>String(v),first_le15:v=>v+'%',ooh:fmtN,ooh_wait_h:v=>String(v),quote_amt:money,quotes_odoo:fmtN,cold_quoted:fmtN,quoted:fmtN};
+dash.onData(()=>{
+  const k=dash.data('kpis');
+  document.querySelectorAll('#dash-root [data-source=kpis][data-where]').forEach(el=>{
+    if(k.status!=='ok'){el.textContent='—';return;}
+    const m=el.getAttribute('data-where').split('=')[1];const r=k.data.find(x=>x.metric===m);
+    el.textContent=r?(fm[m]||String)(Number(r.value)):'—';el.classList.remove('dash-skeleton');
+  });
+  const t=document.getElementById('takeaway');
+  if(k.status==='ok'){const g=m=>Number(k.data.find(x=>x.metric===m).value);
+    t.textContent=`Atención inicial rápida en horario laboral, pero oportunidad de mejora en cierre: ${g('cold_quoted')} de ${g('quoted')} conversaciones cotizadas no registran seguimiento posterior.`;}
+  else t.textContent='—';
+});
+})();
+</script>
+<script>
+(function(){
+const {fmtN,money}=window.__nx;
+function tip(box){let t=box.querySelector('.tip');if(!t){t=document.createElement('div');t.className='tip';t.hidden=true;box.appendChild(t);}return t;}
+function place(t,box,ev){const r=box.getBoundingClientRect();let x=ev.clientX-r.left+12,y=ev.clientY-r.top+12;t.hidden=false;const w=t.offsetWidth;if(x+w>r.width)x=Math.max(0,ev.clientX-r.left-w-12);t.style.left=x+'px';t.style.top=y+'px';}
+function fill(el,lines){el.textContent='';lines.forEach((l,i)=>{const d=document.createElement('div');if(i===0)d.className='h';if(l.c){const s=document.createElement('i');s.style.cssText=`display:inline-block;width:.55rem;height:.55rem;border-radius:2px;margin-right:.3rem;background:${l.c}`;d.appendChild(s);}d.appendChild(document.createTextNode(l.t));el.appendChild(d);});}
+function failed(el,st){el.textContent='';if(st==='error'){el.style.display='flex';el.style.alignItems='center';el.style.justifyContent='center';const d=document.createElement('span');d.style.cssText='width:.375rem;height:.375rem;border-radius:50%;background:var(--color-bad);margin-right:.4rem';el.append(d,Object.assign(document.createElement('span'),{textContent:'Failed to load',style:'color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)'}));}}
+function cleanAxis(g){g.attr('font-size',null).attr('font-family',null);g.selectAll('text').attr('fill','var(--color-fg-muted)').style('font-size','var(--cds-font-size-caption)');g.selectAll('line').attr('stroke','var(--cds-chart-grid)');g.select('.domain').attr('stroke','var(--cds-chart-axis)');}
+const CAMP_ORDER=['4 cubiertas $40.000/mes (BNA)','Financiación 12 cuotas s/interés','12 cuotas Mercado Pago','Promo BNA','Orgánico (sin anuncio)','Viajes – 10 cuotas','Tren delantero + cubiertas','Banco Supervielle'];
+
+function daily(){
+  const el=document.getElementById('chDaily'),lg=document.getElementById('legDaily');const d=dash.data('leads_diarios');
+  if(d.status!=='ok'){failed(el,d.status);lg.textContent='';return;}
+  el.classList.remove('dash-skeleton');el.style.display='';
+  const rows=d.data.map(r=>({dia:String(r.dia).slice(0,10),campana:r.campana,leads:Number(r.leads)}));
+  const days=[...new Set(rows.map(r=>r.dia))].sort();const keys=CAMP_ORDER.filter(c=>rows.some(r=>r.campana===c));
+  const col=c=>dash.colors[keys.indexOf(c)%8];
+  lg.textContent='';keys.forEach(c=>{const s=document.createElement('span');const i=document.createElement('i');i.style.background=col(c);s.append(i,document.createTextNode(c));lg.appendChild(s);});
+  const wide=days.map(dd=>{const o={dia:dd};keys.forEach(k=>o[k]=0);rows.filter(r=>r.dia===dd).forEach(r=>o[r.campana]+=r.leads);return o;});
+  const st=d3.stack().keys(keys)(wide);
+  const W=el.clientWidth||600,H=240,m={t:8,r:8,b:24,l:28};
+  el.querySelectorAll('svg').forEach(s=>s.remove());
+  const svg=d3.select(el).append('svg').attr('width','100%').attr('viewBox',`0 0 ${W} ${H}`);
+  const x=d3.scaleBand(days,[m.l,W-m.r]).padding(.25);const ymax=d3.max(wide,o=>d3.sum(keys,k=>o[k]));const y=d3.scaleLinear([0,ymax],[H-m.b,m.t]).nice();
+  const ga=svg.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickSize(-(W-m.l-m.r)));cleanAxis(ga);ga.select('.domain').remove();
+  const fmtD=d3.utcFormat('%-d/%-m');const step=Math.ceil(days.length/(W<450?5:14));
+  const gx=svg.append('g').attr('transform',`translate(0,${H-m.b})`).call(d3.axisBottom(x).tickValues(days.filter((_,i)=>i%step===0)).tickFormat(s=>fmtD(new Date(s))).tickSize(0).tickPadding(6));cleanAxis(gx);
+  const t=tip(el);
+  svg.append('g').selectAll('g').data(st).join('g').attr('fill',s=>col(s.key)).selectAll('rect').data(s=>s.map(p=>Object.assign(p,{key:s.key}))).join('rect')
+    .attr('x',p=>x(p.data.dia)).attr('width',x.bandwidth()).attr('y',p=>y(p[1])).attr('height',p=>Math.max(0,y(p[0])-y(p[1])))
+    .on('mousemove',(ev,p)=>{const o=p.data;fill(t,[{t:fmtD(new Date(o.dia))+' · '+d3.sum(keys,k=>o[k])+' leads'},...keys.filter(k=>o[k]).map(k=>({c:col(k),t:k+': '+o[k]}))]);place(t,el,ev);}).on('mouseleave',()=>t.hidden=true);
+}
+
+function campTable(){
+  const tb=document.querySelector('#tCamp tbody');const d=dash.data('campanas'),c=dash.data('camp_calc');tb.textContent='';
+  if(d.status!=='ok')return;const cc=c.status==='ok'?c.data:[];
+  d.data.slice().sort((a,b)=>b.leads-a.leads).forEach(r=>{const k=cc.find(x=>x.campana===r.campana)||{};const tr=document.createElement('tr');
+    const cells=[r.campana,r.formato,fmtN(r.leads),String(r.med_primera),fmtN(r.presupuestos),k.tasa_presup!=null?d3.format('.0%')(k.tasa_presup):'—',money(r.monto_presup),k.ticket!=null?money(k.ticket):'—'];
+    cells.forEach((v,i)=>{const td=document.createElement('td');td.textContent=v;if(i===5&&k.tasa_presup!=null)td.className=k.tasa_presup>=.45?'ok':k.tasa_presup<.25?'bad':'';tr.appendChild(td);});tb.appendChild(tr);});
+}
+
+function rank(){
+  const el=document.getElementById('chRank'),lg=document.getElementById('legRank');const d=dash.data('ranking');
+  if(d.status!=='ok'){failed(el,d.status);lg.textContent='';return;}
+  el.style.display='';
+  const parts=[['velocidad','Velocidad'],['calidad','Calidad'],['seguimiento','Seguimiento'],['volumen','Volumen']];
+  lg.textContent='';parts.forEach(([k,n],i)=>{const s=document.createElement('span');const ii=document.createElement('i');ii.style.background=dash.colors[i];s.append(ii,document.createTextNode(n));lg.appendChild(s);});
+  const rows=d.data;const W=el.clientWidth||500,bh=26,gap=12,H=rows.length*(bh+gap)+20;
+  el.querySelectorAll('svg').forEach(s=>s.remove());
+  const svg=d3.select(el).append('svg').attr('width','100%').attr('viewBox',`0 0 ${W} ${H}`);
+  const names=svg.append('g');const lbls=rows.map((r,i)=>names.append('text').text((i+1)+'. '+r.operador).attr('y',i*(bh+gap)+bh/2+4).attr('fill','var(--color-fg)').style('font-size','var(--cds-font-size-caption)'));
+  const lw=d3.max(lbls,t=>t.node().getComputedTextLength())+10;
+  const x=d3.scaleLinear([0,100],[lw,W-36]);const t=tip(el);
+  rows.forEach((r,i)=>{let acc=0;const g=svg.append('g');parts.forEach(([k,n],j)=>{const v=r[k];g.append('rect').attr('x',x(acc)).attr('y',i*(bh+gap)).attr('height',bh).attr('width',Math.max(0,x(acc+v)-x(acc))).attr('fill',dash.colors[j])
+      .on('mousemove',ev=>{fill(t,[{t:r.operador+' · '+r.puntaje+' pts'},...parts.map(([kk,nn],jj)=>({c:dash.colors[jj],t:nn+': '+r[kk].toFixed(1)}))]);place(t,el,ev);}).on('mouseleave',()=>t.hidden=true);acc+=v;});
+    svg.append('text').attr('x',x(acc)+6).attr('y',i*(bh+gap)+bh/2+5).text(r.puntaje).attr('fill','var(--color-fg)').style('font-family','var(--font-heading)').style('font-weight','700').style('font-size','var(--cds-font-size-body)');});
+}
+
+function opsTables(){
+  const d=dash.data('operadores');const t1=document.querySelector('#tOps tbody'),t2=document.querySelector('#tQual tbody');t1.textContent='';t2.textContent='';if(d.status!=='ok')return;
+  const rows=d.data.slice().sort((a,b)=>b.conv-a.conv);
+  const tr=(tb,vals,cls)=>{const r=document.createElement('tr');vals.forEach((v,i)=>{const td=document.createElement('td');td.textContent=v;if(cls&&cls[i])td.className=cls[i];r.appendChild(td);});tb.appendChild(r);};
+  const lvl=(v,good,bad,inv)=>inv?(v<=good?'ok':v>=bad?'bad':''):(v>=good?'ok':v<=bad?'bad':'');
+  rows.forEach(o=>{
+    tr(t1,[o.operador,fmtN(o.conv),o.med_primera+' min',o.med_resp+' min',o.p90_resp+' min',o.pct_le15+'%',o.pct_gt60+'%',fmtN(o.presup),money(o.monto_presup)],[null,null,lvl(o.med_primera,8,15,1),lvl(o.med_resp,5,15,1),lvl(o.p90_resp,30,60,1),lvl(o.pct_le15,80,50),lvl(o.pct_gt60,3,10,1)]);
+    tr(t2,[o.operador,o.saludo+'%',o.pide_nombre+'%',o.pide_medida+'%',o.cotiza+'%',o.invita_cierre+'%',o.seguimiento+'%',String(o.msgs_conv)],[null,lvl(o.saludo,80,50),lvl(o.pide_nombre,80,50),lvl(o.pide_medida,60,30),lvl(o.cotiza,60,40),lvl(o.invita_cierre,50,20),lvl(o.seguimiento,40,10)]);
+  });
+}
+
+function hour(){
+  const el=document.getElementById('chHour');const d=dash.data('respuesta_hora');if(d.status!=='ok'){failed(el,d.status);return;}el.style.display='';
+  const rows=d.data.map(r=>({h:Number(r.hora),n:Number(r.respuestas),m:Number(r.med_min)}));const hrs=d3.range(0,24);
+  const W=el.clientWidth||500,H=240,mg={t:8,r:8,b:24,l:28};el.querySelectorAll('svg').forEach(s=>s.remove());
+  const svg=d3.select(el).append('svg').attr('width','100%').attr('viewBox',`0 0 ${W} ${H}`);
+  const x=d3.scaleBand(hrs,[mg.l,W-mg.r]).padding(.2);const y=d3.scaleLinear([0,d3.max(rows,r=>r.m)],[H-mg.b,mg.t]).nice();
+  const ga=svg.append('g').attr('transform',`translate(${mg.l},0)`).call(d3.axisLeft(y).ticks(4).tickSize(-(W-mg.l-mg.r)));cleanAxis(ga);ga.select('.domain').remove();
+  const gx=svg.append('g').attr('transform',`translate(0,${H-mg.b})`).call(d3.axisBottom(x).tickValues(hrs.filter(h=>h%3===0)).tickFormat(h=>h+'h').tickSize(0).tickPadding(6));cleanAxis(gx);
+  const inH=h=>h>=8&&h<18;const t=tip(el);
+  svg.append('g').selectAll('rect').data(rows).join('rect').attr('x',r=>x(r.h)).attr('width',x.bandwidth()).attr('y',r=>y(r.m)).attr('height',r=>y(0)-y(r.m)).attr('rx',3)
+    .attr('fill',r=>inH(r.h)?dash.colors[0]:'var(--cds-chart-status-critical)')
+    .on('mousemove',(ev,r)=>{fill(t,[{t:r.h+':00–'+r.h+':59 · '+(inH(r.h)?'en horario':'fuera de horario')},{t:'Mediana: '+r.m+' min hábiles'},{t:fmtN(r.n)+' respuestas'}]);place(t,el,ev);}).on('mouseleave',()=>t.hidden=true);
+}
+
+function heat(){
+  const el=document.getElementById('chHeat');const d=dash.data('calor');if(d.status!=='ok'){failed(el,d.status);return;}el.style.display='';
+  const rows=d.data.map(r=>({w:Number(r.dia_semana),h:Number(r.hora),n:Number(r.mensajes)}));
+  const order=[1,2,3,4,5,6,0],names=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];const hrs=d3.range(0,24);
+  const W=el.clientWidth||500,H=240,mg={t:4,r:4,b:22,l:34};el.querySelectorAll('svg').forEach(s=>s.remove());
+  const svg=d3.select(el).append('svg').attr('width','100%').attr('viewBox',`0 0 ${W} ${H}`);
+  const x=d3.scaleBand(hrs,[mg.l,W-mg.r]).padding(.08),y=d3.scaleBand(order,[mg.t,H-mg.b]).padding(.08);
+  const bg=getComputedStyle(el).getPropertyValue('--color-panel').trim()||'#fff';const c0=d3.interpolateRgb(bg,dash.colors[0]);
+  const mx=d3.max(rows,r=>r.n);const map=new Map(rows.map(r=>[r.w+'-'+r.h,r.n]));const t=tip(el);
+  const cells=[];order.forEach(w=>hrs.forEach(h=>cells.push({w,h,n:map.get(w+'-'+h)||0})));
+  svg.append('g').selectAll('rect').data(cells).join('rect').attr('x',c=>x(c.h)).attr('y',c=>y(c.w)).attr('width',x.bandwidth()).attr('height',y.bandwidth()).attr('rx',2)
+    .attr('fill',c=>c.n?c0(.15+.85*Math.sqrt(c.n/mx)):'var(--cds-chart-grid)')
+    .on('mousemove',(ev,c)=>{fill(t,[{t:names[c.w]+' '+c.h+':00'},{t:fmtN(c.n)+' mensajes'}]);place(t,el,ev);}).on('mouseleave',()=>t.hidden=true);
+  const gy=svg.append('g').attr('transform',`translate(${mg.l},0)`).call(d3.axisLeft(y).tickFormat(w=>names[w]).tickSize(0).tickPadding(4));cleanAxis(gy);gy.select('.domain').remove();
+  const gx=svg.append('g').attr('transform',`translate(0,${H-mg.b})`).call(d3.axisBottom(x).tickValues(hrs.filter(h=>h%3===0)).tickFormat(h=>h+'h').tickSize(0).tickPadding(6));cleanAxis(gx);gx.select('.domain').remove();
+}
+
+dash.onData(()=>{daily();campTable();rank();opsTables();hour();heat();});
+})();
+</script>
+</body>
+</html>
