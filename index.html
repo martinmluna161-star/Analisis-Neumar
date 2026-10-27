@@ -1,819 +1,560 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Neumar · ChatRoom WhatsApp – Rendimiento</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
-<style>
-:root {
-  /* Tipografías */
-  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-serif: "Source Serif 4", Georgia, serif;
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Neumar · ChatRoom WhatsApp & Automatizaciones</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 
-  --cds-font-size-caption: 12px;
-  --cds-font-size-body: 14px;
-  --cds-font-size-heading: 17px;
-  --cds-font-size-title: 26px;
-  --cds-font-weight-medium: 600;
+  <style>
+    :root {
+      --bg-main: #0a0d14;
+      --bg-card: rgba(21, 28, 44, 0.88);
+      --border-color: rgba(230, 36, 41, 0.25);
+      --neumar-red: #e62429;
+      --neumar-red-glow: rgba(230, 36, 41, 0.4);
+      --martin-blue: #0088cc;
+      --martin-dark: #0f1d38;
+      --text-primary: #ffffff;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --radius-lg: 16px;
+      --radius-md: 10px;
 
-  --cds-gap-xs: 4px;
-  --cds-gap-sm: 8px;
-  --cds-gap-md: 16px;
-  --cds-gap-lg: 24px;
-  --cds-gap-xl: 32px;
-  --cds-pad-xs: 6px;
-  --cds-pad-sm: 10px;
-  --cds-pad-lg: 20px;
-  --cds-radius: 12px;
-  --cds-dur-slow: .3s;
+      /* Tokens base para componentes internos */
+      --color-fg: #ffffff;
+      --color-fg-muted: #94a3b8;
+      --color-bg: #0a0d14;
+      --color-panel: rgba(21, 28, 44, 0.88);
+      --color-border-line: rgba(255, 255, 255, 0.1);
+      --color-ok: #10b981;
+      --color-warn: #f59e0b;
+      --color-bad: #ef4444;
 
-  /* Paleta Corporativa Neumar - Grupo Martín */
-  --neumar-red: #e62429;
-  --neumar-red-glow: rgba(230, 36, 41, 0.25);
-  --neumar-dark: #0f1d38;
-  --martin-blue: #0088cc;
+      --cds-font-size-caption: .78rem;
+      --cds-font-size-body: .92rem;
+      --cds-font-size-heading: 1.2rem;
+      --cds-font-size-title: 1.8rem;
+      --cds-font-weight-medium: 600;
+      --cds-gap-xs: .25rem;
+      --cds-gap-sm: .5rem;
+      --cds-gap-md: 1rem;
+      --cds-gap-xl: 2rem;
+      --cds-pad-xs: .38rem;
+      --cds-pad-sm: .65rem;
+      --cds-pad-lg: 1.25rem;
+      --cds-radius: 12px;
+      --cds-dur-slow: .3s;
 
-  --color-bg: #0a0d14;
-  --color-panel: #151c2c;
-  --color-panel-header: #0f1d38;
-  --color-fg: #f8fafc;
-  --color-fg-muted: #94a3b8;
-  --color-border-line: rgba(230, 36, 41, 0.2);
+      --cds-chart-grid: rgba(255, 255, 255, 0.08);
+      --cds-chart-axis: #475569;
+      --cds-chart-status-critical: #ef4444;
+      --cds-surface-popover: #0f172a;
+      --cds-border: rgba(255, 255, 255, 0.15);
+      --cds-text-secondary: #94a3b8;
+      --cds-shadow-popover: 0 10px 25px rgba(0,0,0,0.5);
 
-  --color-ok: #10b981;
-  --color-warn: #f59e0b;
-  --color-bad: #ef4444;
+      --font-anthropic-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-anthropic-serif: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
 
-  --cds-chart-grid: #1e293b;
-  --cds-chart-axis: #475569;
-  --cds-chart-status-critical: #ef4444;
-  --cds-surface-popover: #1e293b;
-  --cds-border: #334155;
-  --cds-shadow-popover: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-  --cds-text-secondary: #94a3b8;
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
 
-  /* Colores para series de datos D3 */
-  --c1: #0088cc;
-  --c2: #e62429;
-  --c3: #10b981;
-  --c4: #a855f7;
-  --c5: #f59e0b;
-  --c6: #06b6d4;
-  --c7: #ec4899;
-  --c8: #64748b;
+    body {
+      background: linear-gradient(rgba(10, 13, 20, 0.92), rgba(10, 13, 20, 0.96)), 
+                  url('https://images.unsplash.com/photo-1578844251758-2f71da64c96f?q=80&w=1600&auto=format&fit=crop') center/cover fixed;
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding-bottom: 2rem;
+    }
 
-  color-scheme: dark;
-}
+    /* HEADER & BRANDING CORPORATIVO NEUMAR */
+    header.main-header {
+      background: rgba(15, 29, 56, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 2px solid var(--neumar-red);
+      padding: 1.2rem 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 25px rgba(230, 36, 41, 0.2);
+    }
 
-html, body {
-  margin: 0;
-  background: var(--color-bg);
-  color: var(--color-fg);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-}
+    .brand-container { display: flex; align-items: center; gap: 1.2rem; }
 
-#dash-root {
-  max-width: 1240px;
-  margin-inline: auto;
-  padding-block: 28px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-}
+    .neumar-n-logo {
+      width: 44px; height: 44px;
+      background: #0f1d38;
+      border: 2px solid #ffffff;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; font-weight: 900;
+      box-shadow: 0 0 15px var(--neumar-red-glow);
+    }
 
-#dash-root b { font-weight: 700; }
+    .header-title-box h1 {
+      font-size: 1.3rem; font-weight: 800; color: #ffffff; letter-spacing: 0.5px;
+    }
 
-/* Cabecera Neumar & Grupo Martín */
-.brand-header {
-  background: linear-gradient(135deg, rgba(15, 29, 56, 0.95) 0%, rgba(10, 13, 20, 0.95) 100%);
-  border: 1px solid var(--color-border-line);
-  border-bottom: 3px solid var(--neumar-red);
-  border-radius: var(--cds-radius);
-  padding: 20px var(--cds-pad-lg);
-  margin-bottom: var(--cds-gap-xl);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-}
+    .header-title-box p {
+      font-size: 0.8rem; color: var(--neumar-red); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+    }
 
-.brand-container {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
+    /* BARRA DE PESTAÑAS (TABS) */
+    .tabs-nav {
+      display: flex; gap: 1rem; padding: 1.2rem 2.5rem 0 2.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08); overflow-x: auto;
+      background: rgba(15, 29, 56, 0.4);
+    }
 
-.neumar-n-logo {
-  width: 46px;
-  height: 46px;
-  background: #0f1d38;
-  border: 2px solid #ffffff;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.7rem;
-  font-weight: 900;
-  box-shadow: 0 0 15px var(--neumar-red-glow);
-  flex-shrink: 0;
-}
+    .tab-btn {
+      background: transparent; border: none; color: var(--text-secondary);
+      padding: 0.8rem 1.4rem; font-size: 0.88rem; font-weight: 700;
+      cursor: pointer; position: relative; transition: all 0.2s; white-space: nowrap;
+      display: flex; align-items: center; gap: 8px;
+    }
 
-.brand-titles h1 {
-  font-size: var(--cds-font-size-title);
-  font-weight: 800;
-  margin: 0;
-  color: #ffffff;
-  letter-spacing: 0.5px;
-}
+    .tab-btn.active { color: #ffffff; }
 
-.brand-titles .tag-group {
-  display: inline-block;
-  background: rgba(0, 136, 204, 0.15);
-  border: 1px solid var(--martin-blue);
-  color: #38bdf8;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  margin-top: 4px;
-}
+    .tab-btn.active::after {
+      content: ''; position: absolute; bottom: -1px; left: 0; width: 100%;
+      height: 3px; background: var(--neumar-red); border-radius: 3px 3px 0 0;
+      box-shadow: 0 0 10px var(--neumar-red);
+    }
 
-.nx {
-  display: flex;
-  flex-direction: column;
-  gap: var(--cds-gap-xl);
-  font-variant-numeric: tabular-nums;
-}
+    .tab-content { display: none; padding: 2rem 2.5rem; }
+    .tab-content.active { display: block; }
 
-.nx h2 {
-  font-size: var(--cds-font-size-heading);
-  font-weight: 700;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #ffffff;
-}
+    #dash-root { max-width: 1280px; margin: 0 auto; }
 
-.nx h2::before {
-  content: "";
-  display: inline-block;
-  width: 4px;
-  height: 18px;
-  background: var(--neumar-red);
-  border-radius: 2px;
-}
+    /* DASHBOARD Y TARJETAS */
+    #dash-root .nx { display: flex; flex-direction: column; gap: var(--cds-gap-xl); font-variant-numeric: tabular-nums; }
+    #dash-root .nx h2 { font-size: var(--cds-font-size-heading); font-weight: 700; margin: 0; color: #fff; }
+    #dash-root .nx h3 { font-size: var(--cds-font-size-body); font-weight: 700; margin: 0; color: #fff; }
+    #dash-root .nx .sub { color: var(--text-secondary); font-size: var(--cds-font-size-body); margin: var(--cds-gap-xs) 0 0; max-width: 90ch; line-height: 1.4; }
+    #dash-root .nx .note { color: var(--text-muted); font-size: var(--cds-font-size-caption); margin: var(--cds-gap-xs) 0 var(--cds-gap-md); }
 
-.nx h3 {
-  font-size: var(--cds-font-size-body);
-  font-weight: 700;
-  margin: 0;
-}
+    #dash-root .nx .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: var(--cds-gap-md); }
+    #dash-root .nx .tile, #dash-root .nx .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: var(--cds-pad-lg);
+      min-width: 0;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
 
-.nx .sub {
-  color: var(--color-fg-muted);
-  font-size: var(--cds-font-size-body);
-  margin: var(--cds-gap-xs) 0 0;
-  max-width: 85ch;
-  line-height: 1.5;
-}
+    #dash-root .nx .tile .lbl { color: var(--text-secondary); font-size: var(--cds-font-size-caption); font-weight: 600; }
+    #dash-root .nx .tile .big { font-weight: 800; font-size: 1.9rem; line-height: 1.2; margin-top: var(--cds-gap-xs); color: #fff; }
+    #dash-root .nx .tile .ctx { color: var(--text-muted); font-size: var(--cds-font-size-caption); margin-top: var(--cds-gap-xs); }
+    #dash-root .nx .tile.alert .big { color: var(--color-bad); }
+    #dash-root .nx .tile.warn .big { color: var(--color-warn); }
 
-.nx .note {
-  color: var(--color-fg-muted);
-  font-size: var(--cds-font-size-caption);
-  margin: var(--cds-gap-xs) 0 var(--cds-gap-md);
-}
+    #dash-root .nx .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); gap: var(--cds-gap-md); }
+    #dash-root .nx section { display: flex; flex-direction: column; gap: var(--cds-gap-md); }
+    #dash-root .nx .tw { overflow-x: auto; }
 
-.nx .tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
-  gap: var(--cds-gap-md);
-}
+    /* TABLAS NEUMAR BRANDING */
+    #dash-root .nx table { border-collapse: collapse; width: 100%; font-size: var(--cds-font-size-caption); }
+    #dash-root .nx th, #dash-root .nx td { padding: 0.65rem 0.75rem; text-align: right; border-bottom: 1px solid rgba(255, 255, 255, 0.08); white-space: nowrap; }
+    #dash-root .nx th:first-child, #dash-root .nx td:first-child { text-align: left; }
+    #dash-root .nx th { color: var(--text-secondary); font-weight: 700; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.5px; border-bottom-color: rgba(255, 255, 255, 0.15); }
+    #dash-root .nx td { color: #f1f5f9; }
+    #dash-root .nx td.bad { color: #f87171; font-weight: 600; }
+    #dash-root .nx td.ok { color: #34d399; font-weight: 600; }
+    #dash-root .nx td.warn { color: #fbbf24; font-weight: 600; }
 
-.nx .tile, .nx .card {
-  background: var(--color-panel);
-  border: 1px solid var(--color-border-line);
-  border-radius: var(--cds-radius);
-  padding: var(--cds-pad-lg);
-  min-width: 0;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
-}
+    #dash-root .nx .chart { position: relative; min-height: 240px; }
+    #dash-root .nx .legend { display: flex; flex-wrap: wrap; gap: var(--cds-gap-xs) var(--cds-gap-md); font-size: var(--cds-font-size-caption); color: var(--text-secondary); margin-bottom: var(--cds-gap-sm); }
+    #dash-root .nx .legend i { display: inline-block; width: .6rem; height: .6rem; border-radius: 2px; margin-right: .3rem; vertical-align: baseline; }
+    
+    #dash-root .nx .tip {
+      position: absolute; pointer-events: none;
+      background: var(--cds-surface-popover); border: 1px solid var(--cds-border);
+      border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover);
+      padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption);
+      white-space: nowrap; z-index: 10; color: #fff;
+    }
+    #dash-root .nx .tip .h { color: var(--cds-text-secondary); font-weight: 700; margin-bottom: 2px; }
 
-.nx .tile .lbl {
-  color: var(--color-fg-muted);
-  font-size: var(--cds-font-size-caption);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
+    #dash-root .nx ul.find { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: var(--cds-gap-sm); font-size: var(--cds-font-size-body); color: #cbd5e1; }
+    #dash-root .nx ul.find b { color: #fff; }
 
-.nx .tile .big {
-  font-family: var(--font-sans);
-  font-weight: 800;
-  font-size: var(--cds-font-size-title);
-  line-height: 1.2;
-  margin-top: var(--cds-gap-xs);
-  color: #ffffff;
-}
+    /* ESTILOS PESTAÑA AUTOMATIZACIONES */
+    .auto-container {
+      display: flex; flex-direction: column; gap: 1.5rem;
+    }
 
-.nx .tile .ctx {
-  color: var(--color-fg-muted);
-  font-size: var(--cds-font-size-caption);
-  margin-top: var(--cds-gap-xs);
-}
+    .auto-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--neumar-red);
+      border-radius: var(--radius-lg);
+      padding: 1.4rem;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
 
-.nx .tile.alert { border-left: 4px solid var(--color-bad); }
-.nx .tile.alert .big { color: var(--color-bad); }
-.nx .tile.warn { border-left: 4px solid var(--color-warn); }
-.nx .tile.warn .big { color: var(--color-warn); }
+    .auto-card.blue { border-left-color: var(--martin-blue); }
 
-.nx .grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
-  gap: var(--cds-gap-md);
-}
+    .auto-card-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
+    }
 
-.nx section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--cds-gap-md);
-}
+    .auto-card-title { font-size: 1.1rem; font-weight: 700; color: #ffffff; }
+    .auto-card-meta { font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
 
-.nx .tw { overflow-x: auto; }
+    .badge-status {
+      border-radius: 20px; padding: 4px 12px; font-size: 0.7rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .badge-status.green {
+      background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);
+    }
 
-.nx table {
-  border-collapse: collapse;
-  width: 100%;
-  font-size: var(--cds-font-size-caption);
-}
+    .auto-code-box {
+      background: #070e1b; border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px; padding: 14px; font-family: monospace; font-size: 0.84rem;
+      color: #38bdf8; margin-top: 12px; line-height: 1.45;
+    }
 
-.nx th, .nx td {
-  padding: 8px var(--cds-pad-sm);
-  text-align: right;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  white-space: nowrap;
-}
+    .auto-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; margin-top: 14px; }
+    .auto-subcard { background: #070e1b; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 14px; }
+    .auto-subcard-title { font-size: 0.85rem; font-weight: 700; color: #38bdf8; margin-bottom: 6px; }
+    .auto-subcard-desc { font-size: 0.8rem; color: #cbd5e1; line-height: 1.4; }
 
-.nx th:first-child, .nx td:first-child { text-align: left; }
+    .auto-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; }
 
-.nx th {
-  color: var(--color-fg-muted);
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 11px;
-  letter-spacing: 0.5px;
-}
+    .auto-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; margin-top: 10px; }
+    .auto-table th { color: var(--text-secondary); text-align: left; border-bottom: 1px solid rgba(255,255,255,0.12); padding: 8px 6px; font-size: 0.75rem; text-transform: uppercase; }
+    .auto-table td { border-bottom: 1px solid rgba(255,255,255,0.06); padding: 10px 6px; color: #f1f5f9; }
 
-.nx td.bad { color: var(--color-bad); font-weight: 600; }
-.nx td.ok { color: var(--color-ok); font-weight: 600; }
-.nx td.warn { color: var(--color-warn); font-weight: 600; }
+    @media print{ body{background:#fff} }
+  </style>
+</head>
+<body>
 
-.nx .chart { position: relative; min-height: 240px; }
-.nx .chart.tall { min-height: 300px; }
+  <!-- HEADER BRANDING NEUMAR & GRUPO MARTÍN -->
+  <header class="main-header">
+    <div class="brand-container">
+      <div class="neumar-n-logo">
+        <span style="color:#fff;">N</span><span style="color:var(--neumar-red); margin-left:-3px;">E</span>
+      </div>
+      <div class="header-title-box">
+        <h1>NEUMAR · ChatRoom WhatsApp & Automatizaciones</h1>
+        <p>Ecosistema Grupo Martín</p>
+      </div>
+    </div>
+  </header>
 
-.nx .legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--cds-gap-xs) var(--cds-gap-md);
-  font-size: var(--cds-font-size-caption);
-  color: var(--color-fg-muted);
-  margin-bottom: var(--cds-gap-sm);
-}
+  <!-- PESTAÑAS DE NAVEGACIÓN DE PANELES -->
+  <div class="tabs-nav">
+    <button class="tab-btn active" id="tab-btn-1" onclick="switchMainTab(1)">
+      <i class="fa-solid fa-chart-line"></i> 1. Rendimiento ChatRoom
+    </button>
+    <button class="tab-btn" id="tab-btn-2" onclick="switchMainTab(2)">
+      <i class="fa-solid fa-robot"></i> 2. Automatizaciones Programadas (Odoo)
+    </button>
+  </div>
 
-.nx .legend i {
-  display: inline-block;
-  width: .6rem;
-  height: .6rem;
-  border-radius: 2px;
-  margin-right: .3rem;
-  vertical-align: baseline;
-}
+  <div id="dash-root">
+    
+    <!-- PESTAÑA 1: TABLERO DE RENDIMIENTO -->
+    <div id="pane-1" class="tab-content active">
+      <div class="nx">
+        <header id="top">
+          <h2>Reporte General de Operaciones ChatRoom</h2>
+          <p class="sub">Del 7 al 26 de octubre de 2026. Los tiempos se miden en minutos hábiles (lun–vie 8–18, sáb 8–13, sin domingos ni el feriado del 12/10).</p>
+          <p class="sub" id="takeaway" data-source="kpis" style="color: var(--neumar-red); font-weight: 600; margin-top: 8px;">—</p>
+        </header>
 
-.nx .tip {
-  position: absolute;
-  pointer-events: none;
-  background: var(--cds-surface-popover);
-  border: 1px solid var(--cds-border);
-  border-radius: var(--cds-radius);
-  box-shadow: var(--cds-shadow-popover);
-  padding: 8px 12px;
-  font-size: var(--cds-font-size-caption);
-  white-space: nowrap;
-  z-index: 5;
-}
+        <div class="tiles" id="kpis">
+          <div class="tile"><div class="lbl">Leads nuevos</div><div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=leads">—</div><div class="ctx"><span data-source="kpis" data-field="value" data-where="metric=leads_ads">—</span> desde anuncios de Meta</div></div>
+          <div class="tile"><div class="lbl">1ª respuesta (mediana)</div><div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=first_med">—</div><div class="ctx">P90: <span data-source="kpis" data-field="value" data-where="metric=first_p90">—</span> min hábiles</div></div>
+          <div class="tile"><div class="lbl">Respondidos en ≤15 min</div><div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=first_le15">—</div><div class="ctx">primera respuesta</div></div>
+          <div class="tile warn"><div class="lbl">Leads fuera de horario</div><div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=ooh">—</div><div class="ctx">esperan <span data-source="kpis" data-field="value" data-where="metric=ooh_wait_h">—</span> h reales (mediana)</div></div>
+          <div class="tile"><div class="lbl">Monto presupuestado</div><div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=quote_amt">—</div><div class="ctx"><span data-source="kpis" data-field="value" data-where="metric=quotes_odoo">—</span> presupuestos Odoo</div></div>
+          <div class="tile alert"><div class="lbl">Cotizados sin seguimiento</div><div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=cold_quoted">—</div><div class="ctx">de <span data-source="kpis" data-field="value" data-where="metric=quoted">—</span> conversaciones cotizadas</div></div>
+        </div>
 
-.nx .tip .h { color: var(--cds-text-secondary); font-weight: 700; }
+        <section id="campanas">
+          <h2>Campañas Publicitarias</h2>
+          <div class="grid">
+            <div class="card">
+              <h3>Leads por día y campaña</h3>
+              <p class="note">Conversaciones nuevas según el anuncio que las originó (referral de Meta).</p>
+              <div class="legend" id="legDaily" data-source="leads_diarios"></div>
+              <div class="chart dash-skeleton" id="chDaily" data-source="leads_diarios"></div>
+            </div>
+            <div class="card">
+              <h3>Rendimiento por campaña</h3>
+              <p class="note">Tasa de presupuesto = leads con presupuesto en Odoo / leads. Las ventas confirmadas no se pueden atribuir (ver hallazgos).</p>
+              <div class="tw"><table id="tCamp" data-source="campanas" data-row-key="campana">
+                <thead><tr><th data-field="campana">Campaña</th><th data-field="formato">Formato</th><th data-field="leads">Leads</th><th data-field="med_primera">1ª resp. (min)</th><th data-field="presupuestos">Presup.</th><th data-source="camp_calc" data-field="tasa_presup">Tasa</th><th data-field="monto_presup">Monto</th><th data-source="camp_calc" data-field="ticket">$/lead</th></tr></thead>
+                <tbody></tbody></table></div>
+            </div>
+          </div>
+        </section>
 
-.nx ul.find {
-  margin: 0;
-  padding-left: 1.2rem;
-  display: flex;
-  flex-direction: column;
-  gap: var(--cds-gap-md);
-  font-size: var(--cds-font-size-body);
-  max-width: 85ch;
-  line-height: 1.6;
-}
+        <section id="operadores">
+          <h2>Ranking y Calidad de Operadores</h2>
+          <div class="grid">
+            <div class="card">
+              <h3>Puntaje de atención (0–100)</h3>
+              <p class="note">Velocidad 35% · Calidad del guion 40% · Seguimiento 15% · Volumen 10%. Lautaro y Gonzalo tienen 13 y 11 conversaciones: leer con cautela.</p>
+              <div class="legend" id="legRank" data-source="ranking"></div>
+              <div class="chart" id="chRank" data-source="ranking" style="min-height:220px"></div>
+            </div>
+            <div class="card">
+              <h3>Tiempos y volumen</h3>
+              <p class="note">Respuesta = minutos hábiles desde que el cliente escribe hasta la respuesta del operador.</p>
+              <div class="tw"><table id="tOps" data-source="operadores" data-row-key="operador">
+                <thead><tr><th data-field="operador">Operador</th><th data-field="conv">Conv.</th><th data-field="med_primera">1ª resp.</th><th data-field="med_resp">Mediana</th><th data-field="p90_resp">P90</th><th data-field="pct_le15">≤15 min</th><th data-field="pct_gt60">&gt;60 min</th><th data-field="presup">Presup.</th><th data-field="monto_presup">Monto</th></tr></thead>
+                <tbody></tbody></table></div>
+            </div>
+          </div>
+          <div class="card">
+            <h3>Calidad del guion de atención</h3>
+            <p class="note">% de conversaciones de cada operador donde aparece cada paso (detectado por texto de los mensajes).</p>
+            <div class="tw"><table id="tQual" data-source="operadores" data-row-key="operador">
+              <thead><tr><th data-field="operador">Operador</th><th data-field="saludo">Saluda y se presenta</th><th data-field="pide_nombre">Pide nombre</th><th data-field="pide_medida">Pide medida / vehículo</th><th data-field="cotiza">Envía cotización</th><th data-field="invita_cierre">Invita a sucursal / turno</th><th data-field="seguimiento">Hace seguimiento</th><th data-field="msgs_conv">Msj / conv.</th></tr></thead>
+              <tbody></tbody></table></div>
+          </div>
+        </section>
 
-.nx ul.find li::marker {
-  color: var(--neumar-red);
-}
+        <section id="tiempos">
+          <h2>Patrones Temporales de Tráfico</h2>
+          <div class="grid">
+            <div class="card">
+              <h3>Espera mediana según hora en que escribe el cliente</h3>
+              <p class="note">Minutos hábiles. Fuera de horario la cuenta arranca al abrir, así que la espera real es de horas.</p>
+              <div class="chart" id="chHour" data-source="respuesta_hora"></div>
+            </div>
+            <div class="card">
+              <h3>Mensajes entrantes por día y hora</h3>
+              <p class="note">Mensajes de clientes en las tres semanas. Más oscuro = más mensajes.</p>
+              <div class="chart" id="chHeat" data-source="calor"></div>
+            </div>
+          </div>
+        </section>
 
-.nx .pill {
-  display: inline-block;
-  padding: 0 .45rem;
-  border-radius: 999px;
-  font-size: var(--cds-font-size-caption);
-  border: 1px solid var(--color-border-line);
-}
+        <section id="hallazgos">
+          <h2>Hallazgos Clave y Recomendaciones</h2>
+          <div class="card">
+            <ul class="find">
+              <li><b>La campaña de 4 cubiertas a $40.000/mes (video) sigue siendo el motor:</b> trae 113 de los 315 leads (36%), 47 presupuestos y $36,7 M, el mayor monto. Financiación 12 cuotas (52% de leads con presupuesto) y Banco Supervielle / ICBC (50%) son las que mejor convierten, pero también las de primera respuesta más lenta (cerca de 15 min). Tren delantero casi no convierte: 2 presupuestos en 12 leads.</li>
+              <li><b>El cuello de botella sigue siendo el seguimiento, no la primera respuesta.</b> 93 de las 129 conversaciones cotizadas (72%) no tuvieron un segundo contacto; solo 31 lo tuvieron. Rodrigo recontacta en el 45% de sus cotizadas, Mariano en el 20% y Tomás en el 8%. Proponer: recontacto a las 24 h y a las 72 h con una plantilla y actividad programada en Odoo.</li>
+              <li><b>Casi la mitad de los leads llegan fuera de horario:</b> 142 de 315 (45%) esperan una mediana de 12 h reales. Un mensaje automático que pida medida y vehículo dejaría el lead calificado para la mañana.</li>
+              <li><b>Pocos operadores invitan a la sucursal o proponen turno:</b> solo entre el 14% y el 20% de las conversaciones de Mariano, Tomás y Rodrigo. Sumar al guion un cierre explícito (dirección, horario, "¿te reservo para mañana?"). Tomás y Rodrigo responden en ≤15 min en más del 80% de los casos; Mariano en el 63%, con 11% de respuestas de más de una hora.</li>
+              <li><b>No se puede medir venta por campaña:</b> de 131 presupuestos activos del chat, 130 siguen en borrador y solo 1 está confirmado. Confirmar el presupuesto en Odoo (o vincular el cliente) habilitaría el ROI por anuncio.</li>
+              <li><b>La mayoría de las conversaciones no tiene agente asignado</b> en ChatRoom (262 de 320), por eso el ranking atribuye cada conversación a quien más mensajes envió.</li>
+            </ul>
+          </div>
+        </section>
+      </div>
+    </div>
 
-#dash-root [data-dash-source-state=empty] { color: transparent; }
-#dash-root [data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
-</style>
+    <!-- PESTAÑA 2: AUTOMATIZACIONES EN ODOO -->
+    <div id="pane-2" class="tab-content">
+      <div class="auto-container">
+        
+        <div class="auto-card">
+          <div class="auto-card-header">
+            <div>
+              <div class="auto-card-title">1. Respuesta Automática Fuera de Horario</div>
+              <div class="auto-card-meta">Tarea Programada N.º 66 · Frecuencia: Cada 1 minuto</div>
+            </div>
+            <span class="badge-status green">Activa en Producción</span>
+          </div>
+          <p style="font-size:0.85rem; line-height:1.45; color:#cbd5e1;">
+            Contesta automáticamente a los clientes que escriben fuera de la jornada laboral (Lunes a Viernes de 8 a 18 h, Sábados de 8 a 13 h, Domingos y Feriados). Se activa si el cliente no recibió respuestas en las últimas 12 horas y tiene al menos 25 segundos de antigüedad.
+          </p>
+          <div class="auto-code-box">
+            <b style="color: #fff;">Mensaje Enviado:</b><br>
+            "¡Hola! 👋 Gracias por escribir a Neumar. Ahora estamos fuera de horario: atendemos de lunes a viernes de 8 a 18 y sábados de 8 a 13. Mañana a primera hora te respondemos. Mientras tanto, contanos qué medida de cubierta necesitás o la marca, modelo y año de tu auto, así te preparamos el presupuesto 🚗"
+          </div>
+        </div>
+
+        <div class="auto-card blue">
+          <div class="auto-card-header">
+            <div>
+              <div class="auto-card-title">2. Seguimiento Automático de Presupuestos (24 h y 72 h)</div>
+              <div class="auto-card-meta">Tarea Programada N.º 67 · Frecuencia: Cada 5 minutos</div>
+            </div>
+            <span class="badge-status green">Activa (A la espera de elegibles)</span>
+          </div>
+          <p style="font-size:0.85rem; line-height:1.45; color:#cbd5e1;">
+            Recontacta automáticamente a clientes que recibieron un presupuesto PDF por ChatRoom y no volvieron a escribir. Solo opera en horario comercial y se detiene automáticamente ante cualquier mensaje nuevo del cliente o del operador.
+          </p>
+
+          <div class="auto-grid-3">
+            <div class="auto-subcard">
+              <div class="auto-subcard-title">Paso 1: Paso a las 24 h</div>
+              <div class="auto-subcard-desc">Alterna entre 3 variantes personalizadas (ej. <i>"Hola {nombre}, ¿pudiste ver las opciones de cubiertas que te pasé?..."</i>).</div>
+            </div>
+            <div class="auto-subcard">
+              <div class="auto-subcard-title">Paso 2: Paso a las 72 h</div>
+              <div class="auto-subcard-desc">Envía un último aviso de cierre (ej. <i>"Hola {nombre}, paso por última vez por el presupuesto de tus cubiertas..."</i>).</div>
+            </div>
+            <div class="auto-subcard">
+              <div class="auto-subcard-title">Filtro de Opt-out</div>
+              <div class="auto-subcard-desc">Cancela el envío si el chat contiene palabras como "no me interesa", "ya compré", "gracias" o "stop".</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="auto-grid-2">
+          <div class="auto-card" style="border-left-color:#10b981;">
+            <div class="auto-card-title" style="font-size:1rem;">🛡️ Protecciones Antibloqueo (QR)</div>
+            <ul style="padding-left:18px; font-size:0.83rem; line-height:1.6; color:#94a3b8; margin-top:10px;">
+              <li><b style="color: #fff;">Tope máximo:</b> 15 mensajes por día para cada tarea (máximo 30 mensajes automáticos diarios).</li>
+              <li><b style="color: #fff;">Espaciado de seguridad:</b> Mínimo 4 minutos de diferencia entre un envío automático y el siguiente.</li>
+              <li><b style="color: #fff;">Sin ráfagas:</b> Se envía estrictamente 1 solo mensaje por cada corrida de script.</li>
+            </ul>
+          </div>
+
+          <div class="auto-card" style="border-left-color:#38bdf8;">
+            <div class="auto-card-title" style="font-size:1rem;">⚙️ Parámetros de Control en Odoo</div>
+            <div style="font-size:0.78rem; color:#94a3b8; margin-top:2px;">Ubicación: Ajustes > Técnico > Parámetros del Sistema (filtro "neumar")</div>
+            <table class="auto-table">
+              <thead>
+                <tr><th>Parámetro</th><th>Valor Actual</th><th>Función</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>neumar.ooh.dry</code></td><td><b style="color:#34d399">0</b></td><td>1 = Modo simulacro fuera de horario (solo log)</td></tr>
+                <tr><td><code>neumar.fu.dry</code></td><td><b style="color:#34d399">0</b></td><td>1 = Modo simulacro seguimiento 24/72h</td></tr>
+                <tr><td><code>neumar.fu.start</code></td><td><b style="color:#38bdf8">2026-10-26 12:00</b></td><td>Fecha inicio para evaluación de presupuestos</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
 
 <script>
 const __D={"kpis":[{"metric":"leads","label":"Conversaciones nuevas","value":315},{"metric":"leads_ads","label":"Desde anuncios Meta","value":300},{"metric":"first_med","label":"Mediana 1ª respuesta (min hábiles)","value":6.7},{"metric":"first_p90","label":"P90 1ª respuesta (min hábiles)","value":36.5},{"metric":"first_le15","label":"% 1ª respuesta ≤15 min","value":69},{"metric":"ooh","label":"Leads fuera de horario","value":142},{"metric":"ooh_wait_h","label":"Espera mediana fuera de horario (h reales)","value":12},{"metric":"inhours_med","label":"Mediana 1ª respuesta en horario (min)","value":4.7},{"metric":"quoted","label":"Conversaciones cotizadas","value":129},{"metric":"quotes_odoo","label":"Presupuestos Odoo de leads del chat","value":131},{"metric":"quote_amt","label":"Monto presupuestado ($)","value":96570912},{"metric":"followup","label":"Cotizadas con seguimiento","value":31},{"metric":"cold_quoted","label":"Cotizadas sin seguimiento (+48h)","value":93},{"metric":"unassigned","label":"Conversaciones sin agente asignado","value":262},{"metric":"convs","label":"Conversaciones totales","value":320},{"metric":"sales_linked","label":"Ventas confirmadas vinculadas al chat","value":1}],"campanas":[{"campana":"4 cubiertas $40.000/mes (BNA)","formato":"Video","leads":113,"respondidos":112,"med_primera":6.5,"presupuestos":47,"monto_presup":36729247,"cerro_sin_resp":1,"msgs_cliente":574},{"campana":"Promo BNA","formato":"Imagen","leads":53,"respondidos":51,"med_primera":5.8,"presupuestos":21,"monto_presup":14341340,"cerro_sin_resp":2,"msgs_cliente":212},{"campana":"12 cuotas Mercado Pago","formato":"Imagen","leads":50,"respondidos":49,"med_primera":5.8,"presupuestos":17,"monto_presup":11229040,"cerro_sin_resp":1,"msgs_cliente":254},{"campana":"Financiación 12 cuotas s/interés","formato":"Imagen","leads":27,"respondidos":26,"med_primera":14.8,"presupuestos":14,"monto_presup":14838159,"cerro_sin_resp":1,"msgs_cliente":129},{"campana":"Banco Supervielle / ICBC","formato":"Imagen","leads":16,"respondidos":16,"med_primera":15.1,"presupuestos":8,"monto_presup":9340428,"cerro_sin_resp":0,"msgs_cliente":76},{"campana":"Naranja X (10–18 cuotas)","formato":"Imagen","leads":15,"respondidos":14,"med_primera":2.4,"presupuestos":5,"monto_presup":2885800,"cerro_sin_resp":1,"msgs_cliente":89},{"campana":"Orgánico (sin anuncio)","formato":"—","leads":15,"respondidos":15,"med_primera":1.2,"presupuestos":3,"monto_presup":1336400,"cerro_sin_resp":0,"msgs_cliente":51},{"campana":"Catálogo de productos","formato":"Catálogo","leads":14,"respondidos":13,"med_primera":3.6,"presupuestos":5,"monto_presup":4033210,"cerro_sin_resp":1,"msgs_cliente":87},{"campana":"Tren delantero + cubiertas","formato":"Video","leads":12,"respondidos":12,"med_primera":13.9,"presupuestos":2,"monto_presup":1837288,"cerro_sin_resp":0,"msgs_cliente":56}],"operadores":[{"operador":"Mariano Fernández","conv":101,"msgs":472,"respuestas":283,"med_resp":7.1,"p90_resp":61.3,"med_primera":8.4,"pct_le5":43,"pct_le15":63,"pct_gt60":11,"presup":43,"monto_presup":34492501,"saludo":93,"pide_nombre":86,"pide_medida":25,"cotiza":61,"invita_cierre":14,"seguimiento":20,"msgs_conv":4.7},{"operador":"Tomás Palomino","conv":97,"msgs":557,"respuestas":392,"med_resp":3.3,"p90_resp":20.1,"med_primera":6.9,"pct_le5":58,"pct_le15":83,"pct_gt60":3,"presup":34,"monto_presup":19859848,"saludo":100,"pide_nombre":86,"pide_medida":49,"cotiza":74,"invita_cierre":19,"seguimiento":8,"msgs_conv":5.7},{"operador":"Rodrigo Cozzolino","conv":86,"msgs":511,"respuestas":272,"med_resp":3.1,"p90_resp":35.8,"med_primera":4.8,"pct_le5":61,"pct_le15":81,"pct_gt60":7,"presup":32,"monto_presup":30844433,"saludo":100,"pide_nombre":84,"pide_medida":44,"cotiza":70,"invita_cierre":20,"seguimiento":45,"msgs_conv":5.9},{"operador":"Lautaro Cadelago","conv":13,"msgs":57,"respuestas":35,"med_resp":10,"p90_resp":63.1,"med_primera":10,"pct_le5":43,"pct_le15":60,"pct_gt60":11,"presup":8,"monto_presup":7350050,"saludo":100,"pide_nombre":92,"pide_medida":38,"cotiza":62,"invita_cierre":0,"seguimiento":25,"msgs_conv":4.4},{"operador":"Gonzalo Gatica","conv":11,"msgs":95,"respuestas":58,"med_resp":16,"p90_resp":80.7,"med_primera":22.9,"pct_le5":40,"pct_le15":48,"pct_gt60":16,"presup":5,"monto_presup":4024080,"saludo":100,"pide_nombre":73,"pide_medida":55,"cotiza":73,"invita_cierre":64,"seguimiento":33,"msgs_conv":8.6}],"respuesta_hora":[{"hora":0,"respuestas":11,"med_min":15},{"hora":1,"respuestas":5,"med_min":12.6},{"hora":5,"respuestas":5,"med_min":12.4},{"hora":6,"respuestas":1,"med_min":12.1},{"hora":7,"respuestas":13,"med_min":12.1},{"hora":8,"respuestas":160,"med_min":2.8},{"hora":9,"respuestas":118,"med_min":3.4},{"hora":10,"respuestas":116,"med_min":7.9},{"hora":11,"respuestas":90,"med_min":2.6},{"hora":12,"respuestas":89,"med_min":3.5},{"hora":13,"respuestas":89,"med_min":1.8},{"hora":14,"respuestas":79,"med_min":4},{"hora":15,"respuestas":73,"med_min":2.4},{"hora":16,"respuestas":27,"med_min":6.8},{"hora":17,"respuestas":65,"med_min":1.9},{"hora":18,"respuestas":27,"med_min":13},{"hora":19,"respuestas":22,"med_min":7.4},{"hora":20,"respuestas":17,"med_min":12.6},{"hora":21,"respuestas":17,"med_min":15.6},{"hora":22,"respuestas":6,"med_min":10.5},{"hora":23,"respuestas":10,"med_min":9}],"calor":[{"dia_semana":0,"hora":7,"mensajes":1},{"dia_semana":0,"hora":9,"mensajes":2},{"dia_semana":0,"hora":10,"mensajes":2},{"dia_semana":0,"hora":11,"mensajes":4},{"dia_semana":0,"hora":12,"mensajes":4},{"dia_semana":0,"hora":13,"mensajes":4},{"dia_semana":0,"hora":14,"mensajes":2},{"dia_semana":0,"hora":15,"mensajes":1},{"dia_semana":0,"hora":16,"mensajes":3},{"dia_semana":0,"hora":17,"mensajes":5},{"dia_semana":0,"hora":18,"mensajes":2},{"dia_semana":0,"hora":19,"mensajes":2},{"dia_semana":0,"hora":20,"mensajes":2},{"dia_semana":0,"hora":21,"mensajes":4},{"dia_semana":0,"hora":22,"mensajes":1},{"dia_semana":0,"hora":23,"mensajes":4},{"dia_semana":1,"hora":0,"mensajes":2},{"dia_semana":1,"hora":7,"mensajes":4},{"dia_semana":1,"hora":8,"mensajes":43},{"dia_semana":1,"hora":9,"mensajes":20},{"dia_semana":1,"hora":10,"mensajes":13},{"dia_semana":1,"hora":11,"mensajes":14},{"dia_semana":1,"hora":12,"mensajes":24},{"dia_semana":1,"hora":13,"mensajes":26},{"dia_semana":1,"hora":14,"mensajes":11},{"dia_semana":1,"hora":15,"mensajes":20},{"dia_semana":1,"hora":16,"mensajes":4},{"dia_semana":1,"hora":17,"mensajes":18},{"dia_semana":1,"hora":18,"mensajes":13},{"dia_semana":1,"hora":19,"mensajes":8},{"dia_semana":1,"hora":20,"mensajes":6},{"dia_semana":1,"hora":21,"mensajes":3},{"dia_semana":1,"hora":22,"mensajes":1},{"dia_semana":1,"hora":23,"mensajes":6},{"dia_semana":2,"hora":0,"mensajes":1},{"dia_semana":2,"hora":7,"mensajes":2},{"dia_semana":2,"hora":8,"mensajes":73},{"dia_semana":2,"hora":9,"mensajes":36},{"dia_semana":2,"hora":10,"mensajes":30},{"dia_semana":2,"hora":11,"mensajes":38},{"dia_semana":2,"hora":12,"mensajes":7},{"dia_semana":2,"hora":13,"mensajes":39},{"dia_semana":2,"hora":14,"mensajes":33},{"dia_semana":2,"hora":15,"mensajes":26},{"dia_semana":2,"hora":16,"mensajes":3},{"dia_semana":2,"hora":17,"mensajes":36},{"dia_semana":2,"hora":18,"mensajes":7},{"dia_semana":2,"hora":19,"mensajes":3},{"dia_semana":2,"hora":20,"mensajes":5},{"dia_semana":2,"hora":21,"mensajes":1},{"dia_semana":2,"hora":23,"mensajes":1},{"dia_semana":3,"hora":0,"mensajes":5},{"dia_semana":3,"hora":1,"mensajes":1},{"dia_semana":3,"hora":5,"mensajes":2},{"dia_semana":3,"hora":7,"mensajes":8},{"dia_semana":3,"hora":8,"mensajes":30},{"dia_semana":3,"hora":9,"mensajes":27},{"dia_semana":3,"hora":10,"mensajes":61},{"dia_semana":3,"hora":11,"mensajes":17},{"dia_semana":3,"hora":12,"mensajes":21},{"dia_semana":3,"hora":13,"mensajes":33},{"dia_semana":3,"hora":14,"mensajes":26},{"dia_semana":3,"hora":15,"mensajes":7},{"dia_semana":3,"hora":16,"mensajes":8},{"dia_semana":3,"hora":17,"mensajes":9},{"dia_semana":3,"hora":18,"mensajes":5},{"dia_semana":3,"hora":19,"mensajes":6},{"dia_semana":3,"hora":20,"mensajes":1},{"dia_semana":3,"hora":21,"mensajes":8},{"dia_semana":3,"hora":22,"mensajes":3},{"dia_semana":4,"hora":0,"mensajes":2},{"dia_semana":4,"hora":1,"mensajes":1},{"dia_semana":4,"hora":5,"mensajes":1},{"dia_semana":4,"hora":6,"mensajes":1},{"dia_semana":4,"hora":7,"mensajes":2},{"dia_semana":4,"hora":8,"mensajes":8},{"dia_semana":4,"hora":9,"mensajes":21},{"dia_semana":4,"hora":10,"mensajes":36},{"dia_semana":4,"hora":11,"mensajes":13},{"dia_semana":4,"hora":12,"mensajes":25},{"dia_semana":4,"hora":13,"mensajes":22},{"dia_semana":4,"hora":14,"mensajes":23},{"dia_semana":4,"hora":15,"mensajes":22},{"dia_semana":4,"hora":16,"mensajes":7},{"dia_semana":4,"hora":17,"mensajes":13},{"dia_semana":4,"hora":18,"mensajes":11},{"dia_semana":4,"hora":19,"mensajes":8},{"dia_semana":4,"hora":20,"mensajes":4},{"dia_semana":4,"hora":21,"mensajes":3},{"dia_semana":4,"hora":22,"mensajes":1},{"dia_semana":5,"hora":0,"mensajes":2},{"dia_semana":5,"hora":1,"mensajes":3},{"dia_semana":5,"hora":5,"mensajes":1},{"dia_semana":5,"hora":8,"mensajes":41},{"dia_semana":5,"hora":9,"mensajes":31},{"dia_semana":5,"hora":10,"mensajes":8},{"dia_semana":5,"hora":11,"mensajes":24},{"dia_semana":5,"hora":12,"mensajes":23},{"dia_semana":5,"hora":13,"mensajes":20},{"dia_semana":5,"hora":14,"mensajes":16},{"dia_semana":5,"hora":15,"mensajes":23},{"dia_semana":5,"hora":16,"mensajes":7},{"dia_semana":5,"hora":17,"mensajes":10},{"dia_semana":5,"hora":18,"mensajes":5},{"dia_semana":5,"hora":19,"mensajes":12},{"dia_semana":5,"hora":20,"mensajes":7},{"dia_semana":5,"hora":21,"mensajes":1},{"dia_semana":5,"hora":22,"mensajes":1},{"dia_semana":5,"hora":23,"mensajes":4},{"dia_semana":6,"hora":0,"mensajes":1},{"dia_semana":6,"hora":1,"mensajes":2},{"dia_semana":6,"hora":5,"mensajes":2},{"dia_semana":6,"hora":7,"mensajes":1},{"dia_semana":6,"hora":8,"mensajes":38},{"dia_semana":6,"hora":9,"mensajes":28},{"dia_semana":6,"hora":10,"mensajes":17},{"dia_semana":6,"hora":11,"mensajes":21},{"dia_semana":6,"hora":12,"mensajes":22},{"dia_semana":6,"hora":13,"mensajes":4},{"dia_semana":6,"hora":14,"mensajes":6},{"dia_semana":6,"hora":15,"mensajes":4},{"dia_semana":6,"hora":16,"mensajes":4},{"dia_semana":6,"hora":17,"mensajes":4},{"dia_semana":6,"hora":18,"mensajes":6},{"dia_semana":6,"hora":20,"mensajes":2},{"dia_semana":6,"hora":21,"mensajes":4},{"dia_semana":6,"hora":22,"mensajes":1}],"leads_diarios":[{"dia":"2026-10-07","campana":"Orgánico (sin anuncio)","leads":3},{"dia":"2026-10-07","campana":"12 cuotas Mercado Pago","leads":1},{"dia":"2026-10-08","campana":"4 cubiertas $40.000/mes (BNA)","leads":4},{"dia":"2026-10-08","campana":"Financiación 12 cuotas s/interés","leads":3},{"dia":"2026-10-08","campana":"Orgánico (sin anuncio)","leads":2},{"dia":"2026-10-08","campana":"12 cuotas Mercado Pago","leads":1},{"dia":"2026-10-09","campana":"4 cubiertas $40.000/mes (BNA)","leads":7},{"dia":"2026-10-09","campana":"Naranja X (10–18 cuotas)","leads":3},{"dia":"2026-10-09","campana":"12 cuotas Mercado Pago","leads":2},{"dia":"2026-10-09","campana":"Orgánico (sin anuncio)","leads":1},{"dia":"2026-10-09","campana":"Promo BNA","leads":1},{"dia":"2026-10-10","campana":"Naranja X (10–18 cuotas)","leads":6},{"dia":"2026-10-10","campana":"4 cubiertas $40.000/mes (BNA)","leads":6},{"dia":"2026-10-10","campana":"12 cuotas Mercado Pago","leads":1},{"dia":"2026-10-10","campana":"Tren delantero + cubiertas","leads":1},{"dia":"2026-10-10","campana":"Banco Supervielle / ICBC","leads":1},{"dia":"2026-10-10","campana":"Promo BNA","leads":1},{"dia":"2026-10-11","campana":"Financiación 12 cuotas s/interés","leads":2},{"dia":"2026-10-11","campana":"4 cubiertas $40.000/mes (BNA)","leads":2},{"dia":"2026-10-11","campana":"12 cuotas Mercado Pago","leads":1},{"dia":"2026-10-11","campana":"Orgánico (sin anuncio)","leads":1},{"dia":"2026-10-11","campana":"Tren delantero + cubiertas","leads":1},{"dia":"2026-10-12","campana":"4 cubiertas $40.000/mes (BNA)","leads":2},{"dia":"2026-10-12","campana":"12 cuotas Mercado Pago","leads":2},{"dia":"2026-10-12","campana":"Naranja X (10–18 cuotas)","leads":2},{"dia":"2026-10-12","campana":"Catálogo de productos","leads":1},{"dia":"2026-10-13","campana":"4 cubiertas $40.000/mes (BNA)","leads":11},{"dia":"2026-10-13","campana":"Promo BNA","leads":5},{"dia":"2026-10-13","campana":"12 cuotas Mercado Pago","leads":3},{"dia":"2026-10-13","campana":"Tren delantero + cubiertas","leads":2},{"dia":"2026-10-13","campana":"Financiación 12 cuotas s/interés","leads":2},{"dia":"2026-10-13","campana":"Orgánico (sin anuncio)","leads":1},{"dia":"2026-10-13","campana":"Banco Supervielle / ICBC","leads":1},{"dia":"2026-10-14","campana":"4 cubiertas $40.000/mes (BNA)","leads":8},{"dia":"2026-10-14","campana":"Promo BNA","leads":8},{"dia":"2026-10-14","campana":"12 cuotas Mercado Pago","leads":4},{"dia":"2026-10-14","campana":"Financiación 12 cuotas s/interés","leads":2},{"dia":"2026-10-14","campana":"Tren delantero + cubiertas","leads":2},{"dia":"2026-10-14","campana":"Banco Supervielle / ICBC","leads":1},{"dia":"2026-10-14","campana":"Orgánico (sin anuncio)","leads":1},{"dia":"2026-10-15","campana":"12 cuotas Mercado Pago","leads":4},{"dia":"2026-10-15","campana":"Financiación 12 cuotas s/interés","leads":3},{"dia":"2026-10-15","campana":"4 cubiertas $40.000/mes (BNA)","leads":3},{"dia":"2026-10-15","campana":"Tren delantero + cubiertas","leads":2},{"dia":"2026-10-15","campana":"Catálogo de productos","leads":1},{"dia":"2026-10-15","campana":"Promo BNA","leads":1},{"dia":"2026-10-16","campana":"Promo BNA","leads":5},{"dia":"2026-10-16","campana":"4 cubiertas $40.000/mes (BNA)","leads":5},{"dia":"2026-10-16","campana":"Naranja X (10–18 cuotas)","leads":1},{"dia":"2026-10-16","campana":"Catálogo de productos","leads":1},{"dia":"2026-10-16","campana":"12 cuotas Mercado Pago","leads":1},{"dia":"2026-10-16","campana":"Financiación 12 cuotas s/interés","leads":1},{"dia":"2026-10-16","campana":"Tren delantero + cubiertas","leads":1},{"dia":"2026-10-16","campana":"Orgánico (sin anuncio)","leads":1},{"dia":"2026-10-17","campana":"12 cuotas Mercado Pago","leads":3},{"dia":"2026-10-17","campana":"4 cubiertas $40.000/mes (BNA)","leads":3},{"dia":"2026-10-17","campana":"Financiación 12 cuotas s/interés","leads":1},{"dia":"2026-10-17","campana":"Banco Supervielle / ICBC","leads":1},{"dia":"2026-10-17","campana":"Promo BNA","leads":1},{"dia":"2026-10-18","campana":"4 cubiertas $40.000/mes (BNA)","leads":3},{"dia":"2026-10-18","campana":"Banco Supervielle / ICBC","leads":1},{"dia":"2026-10-18","campana":"12 cuotas Mercado Pago","leads":1},{"dia":"2026-10-18","campana":"Tren delantero + cubiertas","leads":1},{"dia":"2026-10-19","campana":"4 cubiertas $40.000/mes (BNA)","leads":7},{"dia":"2026-10-19","campana":"Financiación 12 cuotas s/interés","leads":4},{"dia":"2026-10-19","campana":"12 cuotas Mercado Pago","leads":2},{"dia":"2026-10-19","campana":"Promo BNA","leads":1},{"dia":"2026-10-19","campana":"Banco Supervielle / ICBC","leads":1},{"dia":"2026-10-20","campana":"4 cubiertas $40.000/mes (BNA)","leads":15},{"dia":"2026-10-20","campana":"Banco Supervielle / ICBC","leads":7},{"dia":"2026-10-20","campana":"Financiación 12 cuotas s/interés","leads":2},{"dia":"2026-10-20","campana":"Catálogo de productos","leads":1},{"dia":"2026-10-20","campana":"12 cuotas Mercado Pago","leads":1},{"dia":"2026-10-20","campana":"Naranja X (10–18 cuotas)","leads":1},{"dia":"2026-10-21","campana":"4 cubiertas $40.000/mes (BNA)","leads":10},{"dia":"2026-10-21","campana":"Promo BNA","leads":4},{"dia":"2026-10-21","campana":"12 cuotas Mercado Pago","leads":3},{"dia":"2026-10-21","campana":"Financiación 12 cuotas s/interés","leads":3},{"dia":"2026-10-21","campana":"Banco Supervielle / ICBC","leads":2},{"dia":"2026-10-21","campana":"Catálogo de productos","leads":2},{"dia":"2026-10-22","campana":"Promo BNA","leads":7},{"dia":"2026-10-22","campana":"4 cubiertas $40.000/mes (BNA)","leads":6},{"dia":"2026-10-22","campana":"12 cuotas Mercado Pago","leads":5},{"dia":"2026-10-22","campana":"Catálogo de productos","leads":2},{"dia":"2026-10-22","campana":"Tren delantero + cubiertas","leads":1},{"dia":"2026-10-22","campana":"Banco Supervielle / ICBC","leads":1},{"dia":"2026-10-23","campana":"4 cubiertas $40.000/mes (BNA)","leads":9},{"dia":"2026-10-23","campana":"12 cuotas Mercado Pago","leads":5},{"dia":"2026-10-23","campana":"Promo BNA","leads":5},{"dia":"2026-10-23","campana":"Orgánico (sin anuncio)","leads":3},{"dia":"2026-10-23","campana":"Catálogo de productos","leads":1},{"dia":"2026-10-23","campana":"Financiación 12 cuotas s/interés","leads":1},{"dia":"2026-10-24","campana":"Promo BNA","leads":5},{"dia":"2026-10-24","campana":"4 cubiertas $40.000/mes (BNA)","leads":3},{"dia":"2026-10-24","campana":"12 cuotas Mercado Pago","leads":2},{"dia":"2026-10-24","campana":"Tren delantero + cubiertas","leads":1},{"dia":"2026-10-24","campana":"Catálogo de productos","leads":1},{"dia":"2026-10-25","campana":"4 cubiertas $40.000/mes (BNA)","leads":6},{"dia":"2026-10-25","campana":"12 cuotas Mercado Pago","leads":4},{"dia":"2026-10-25","campana":"Catálogo de productos","leads":3},{"dia":"2026-10-25","campana":"Promo BNA","leads":2},{"dia":"2026-10-25","campana":"Financiación 12 cuotas s/interés","leads":2},{"dia":"2026-10-25","campana":"Orgánico (sin anuncio)","leads":1},{"dia":"2026-10-26","campana":"Promo BNA","leads":7},{"dia":"2026-10-26","campana":"12 cuotas Mercado Pago","leads":4},{"dia":"2026-10-26","campana":"4 cubiertas $40.000/mes (BNA)","leads":3},{"dia":"2026-10-26","campana":"Naranja X (10–18 cuotas)","leads":2},{"dia":"2026-10-26","campana":"Catálogo de productos","leads":1},{"dia":"2026-10-26","campana":"Financiación 12 cuotas s/interés","leads":1},{"dia":"2026-10-26","campana":"Orgánico (sin anuncio)","leads":1}]};
 
 (function(){
   const calcs={},cbs=[];
-  const brandColors=['#0088cc','#e62429','#10b981','#a855f7','#f59e0b','#06b6d4','#ec4899','#64748b'];
-
+  const neumarPalette=['#e62429','#0088cc','#10b981','#f59e0b','#8b5cf6','#ec4899','#38bdf8','#f97316'];
   window.dash={
-    colors: brandColors,
-    data(id){
-      if(calcs[id]) return {status:'ok',data:calcs[id].data,columns:[]};
-      if(__D[id]) return {status:'ok',data:__D[id],columns:Object.keys(__D[id][0]||{})};
-      return {status:'missing',data:[]};
-    },
-    calc(id,o){ calcs[id]={data:o.fn(...o.inputs.map(i=>dash.data(i).data))}; },
-    loader(){}, refresh(){}, params(){return{}}, setParams(){}, resetParams(){}, setLink(){},
-    onData(fn){ cbs.push(fn); fn(); }
+    colors: neumarPalette,
+    data(id){if(calcs[id])return {status:'ok',data:calcs[id].data,columns:[]};if(__D[id])return {status:'ok',data:__D[id],columns:Object.keys(__D[id][0]||{})};return {status:'missing',data:[]};},
+    calc(id,o){calcs[id]={data:o.fn(...o.inputs.map(i=>dash.data(i).data))};},
+    loader(){},refresh(){},params(){return{}},setParams(){},resetParams(){},setLink(){},
+    onData(fn){cbs.push(fn);fn();}
   };
-
-  let t;
-  const run=()=>{ clearTimeout(t); t=setTimeout(()=>{ cbs.forEach(f=>f()); },120); };
-  addEventListener('resize',run);
+  let t;const run=()=>{clearTimeout(t);t=setTimeout(()=>{cbs.forEach(f=>f());},120)};addEventListener('resize',run);
   window.__rerun=()=>cbs.forEach(f=>f());
 })();
-</script>
-</head>
-<body>
 
-<div id="dash-root">
-  <!-- Cabecera de Marca Corporativa -->
-  <header class="brand-header">
-    <div class="brand-container">
-      <div class="neumar-n-logo">
-        <span style="color:#ffffff;">N</span><span style="color:var(--neumar-red); margin-left:-3px;">E</span>
-      </div>
-      <div class="brand-titles">
-        <h1>NEU<span style="color:var(--neumar-red);">MAR</span> · ChatRoom WhatsApp</h1>
-        <div class="tag-group">UN EMPRENDIMIENTO DEL GRUPO MARTÍN</div>
-      </div>
-    </div>
-    <div style="text-align:right;">
-      <p class="sub" style="margin:0; font-size:12px;">Periodo: <b>7 al 26 de octubre de 2026</b></p>
-      <p class="sub" style="margin:2px 0 0; font-size:11px; opacity:0.8;">Medición en minutos hábiles (lun–vie 8–18, sáb 8–13)</p>
-    </div>
-  </header>
+function switchMainTab(num) {
+  document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(e => e.classList.remove('active'));
+  document.getElementById(`pane-${num}`).classList.add('active');
+  document.getElementById(`tab-btn-${num}`).classList.add('active');
+}
 
-  <div class="nx">
-    <div>
-      <p class="sub" id="takeaway" data-source="kpis" style="font-size:15px; font-weight:500; color:#e2e8f0; margin-bottom:16px;">—</p>
-    </div>
-
-    <!-- Métrica KPIs principales -->
-    <div class="tiles" id="kpis">
-      <div class="tile">
-        <div class="lbl">Leads nuevos</div>
-        <div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=leads">—</div>
-        <div class="ctx"><span data-source="kpis" data-field="value" data-where="metric=leads_ads">—</span> desde anuncios Meta</div>
-      </div>
-      <div class="tile">
-        <div class="lbl">1ª respuesta (mediana)</div>
-        <div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=first_med">—</div>
-        <div class="ctx">P90: <span data-source="kpis" data-field="value" data-where="metric=first_p90">—</span> min hábiles</div>
-      </div>
-      <div class="tile">
-        <div class="lbl">Respondidos ≤15 min</div>
-        <div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=first_le15">—</div>
-        <div class="ctx">primera respuesta</div>
-      </div>
-      <div class="tile warn">
-        <div class="lbl">Leads fuera de horario</div>
-        <div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=ooh">—</div>
-        <div class="ctx">esperan <span data-source="kpis" data-field="value" data-where="metric=ooh_wait_h">—</span> h reales (mediana)</div>
-      </div>
-      <div class="tile">
-        <div class="lbl">Monto presupuestado</div>
-        <div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=quote_amt">—</div>
-        <div class="ctx"><span data-source="kpis" data-field="value" data-where="metric=quotes_odoo">—</span> presupuestos Odoo</div>
-      </div>
-      <div class="tile alert">
-        <div class="lbl">Cotizados sin seguimiento</div>
-        <div class="big dash-skeleton" data-source="kpis" data-field="value" data-where="metric=cold_quoted">—</div>
-        <div class="ctx">de <span data-source="kpis" data-field="value" data-where="metric=quoted">—</span> conversaciones cotizadas</div>
-      </div>
-    </div>
-
-    <!-- Sección Campañas -->
-    <section id="campanas">
-      <h2>Campañas de Marketing</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>Leads por día y campaña</h3>
-          <p class="note">Conversaciones nuevas según el anuncio que las originó (referral de Meta).</p>
-          <div class="legend" id="legDaily" data-source="leads_diarios"></div>
-          <div class="chart dash-skeleton" id="chDaily" data-source="leads_diarios"></div>
-        </div>
-        <div class="card">
-          <h3>Rendimiento por campaña</h3>
-          <p class="note">Tasa de presupuesto = leads con presupuesto en Odoo / leads totales.</p>
-          <div class="tw">
-            <table id="tCamp" data-source="campanas" data-row-key="campana">
-              <thead>
-                <tr>
-                  <th data-field="campana">Campaña</th>
-                  <th data-field="formato">Formato</th>
-                  <th data-field="leads">Leads</th>
-                  <th data-field="med_primera">1ª resp. (min)</th>
-                  <th data-field="presupuestos">Presup.</th>
-                  <th data-source="camp_calc" data-field="tasa_presup">Tasa</th>
-                  <th data-field="monto_presup">Monto</th>
-                  <th data-source="camp_calc" data-field="ticket">$/lead</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Sección Operadores -->
-    <section id="operadores">
-      <h2>Ranking de Operadores</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>Puntaje de atención (0–100)</h3>
-          <p class="note">Velocidad 35% · Calidad del guion 40% · Seguimiento 15% · Volumen 10%. Lautaro y Gonzalo tienen 13 y 11 conversaciones: leer con cautela.</p>
-          <div class="legend" id="legRank" data-source="ranking"></div>
-          <div class="chart" id="chRank" data-source="ranking" style="min-height:220px"></div>
-        </div>
-        <div class="card">
-          <h3>Tiempos y volumen</h3>
-          <p class="note">Respuesta = minutos hábiles desde que el cliente escribe hasta la respuesta del operador.</p>
-          <div class="tw">
-            <table id="tOps" data-source="operadores" data-row-key="operador">
-              <thead>
-                <tr>
-                  <th data-field="operador">Operador</th>
-                  <th data-field="conv">Conv.</th>
-                  <th data-field="med_primera">1ª resp.</th>
-                  <th data-field="med_resp">Mediana</th>
-                  <th data-field="p90_resp">P90</th>
-                  <th data-field="pct_le15">≤15 min</th>
-                  <th data-field="pct_gt60">&gt;60 min</th>
-                  <th data-field="presup">Presup.</th>
-                  <th data-field="monto_presup">Monto</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Calidad del guion de atención</h3>
-        <p class="note">% de conversaciones de cada operador donde aparece cada paso (detectado por procesamiento de texto).</p>
-        <div class="tw">
-          <table id="tQual" data-source="operadores" data-row-key="operador">
-            <thead>
-              <tr>
-                <th data-field="operador">Operador</th>
-                <th data-field="saludo">Saluda y se presenta</th>
-                <th data-field="pide_nombre">Pide nombre</th>
-                <th data-field="pide_medida">Pide medida / vehículo</th>
-                <th data-field="cotiza">Envía cotización</th>
-                <th data-field="invita_cierre">Invita a sucursal / turno</th>
-                <th data-field="seguimiento">Hace seguimiento</th>
-                <th data-field="msgs_conv">Msj / conv.</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- Sección Tiempos -->
-    <section id="tiempos">
-      <h2>Comportamiento Horario y Tiempos de Espera</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>Espera mediana según hora en que escribe el cliente</h3>
-          <p class="note">Minutos hábiles. Fuera de horario la cuenta arranca al abrir, así que la espera real es de horas.</p>
-          <div class="chart" id="chHour" data-source="respuesta_hora"></div>
-        </div>
-        <div class="card">
-          <h3>Mensajes entrantes por día y hora</h3>
-          <p class="note">Mapa de calor de mensajes de clientes en las 3 semanas. Más intenso = mayor volumen.</p>
-          <div class="chart" id="chHeat" data-source="calor"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Sección Hallazgos Corregida -->
-    <section id="hallazgos">
-      <h2>Hallazgos y Próximos Pasos</h2>
-      <div class="card">
-        <ul class="find">
-          <li><b>La campaña de 4 cubiertas a $40.000/mes (video) sigue siendo el motor principal:</b> genera 113 de los 315 leads (36%), 47 presupuestos y $36,7 M en ventas presupuestadas, representando el mayor monto total. Financiación 12 cuotas (52% de conversion a presupuesto) y Banco Supervielle / ICBC (50%) son las que mejor convierten, aunque tienen una primera respuesta más lenta (cercana a 15 min). Tren delantero casi no convierte a presupuesto (solo 2 presupuestos en 12 leads).</li>
-          <li><b>El cuello de botella principal es el seguimiento comercial, no la primera respuesta:</b> 93 de las 129 conversaciones cotizadas (72%) no tuvieron un segundo contacto después de enviar el precio. Rodrigo recontacta en el 45% de sus cotizadas, Mariano en el 20% y Tomás en el 8%. Proponer: protocolo obligatorio de recontacto a las 24 h y a las 72 h mediante plantilla estandarizada y asignación de actividad en Odoo.</li>
-          <li><b>Dificultad de atribución de ventas confirmadas por campaña:</b> de los 131 presupuestos activos generados desde el chat en Odoo, 130 continúan en estado borrador y solo 1 está confirmado formalmente. Confirmar las cotizaciones en Odoo o vincular de forma consistente los contactos del chat permitirá calcular con exactitud el ROI por anuncio.</li>
-        </ul>
-      </div>
-    </section>
-  </div>
-</div>
-
-<script>
 (function(){
   const fmtN=d3.format(',');
   const money=v=>'$'+new Intl.NumberFormat('es-AR',{notation:'compact',maximumFractionDigits:1}).format(v);
   const moneyFull=v=>'$'+new Intl.NumberFormat('es-AR',{maximumFractionDigits:0}).format(v);
   window.__nx={fmtN,money,moneyFull};
-
-  dash.calc('camp_calc',{
-    inputs:['campanas'],
-    title:'Tasa de presupuesto por campaña',
-    description:'Presupuestos / leads y monto presupuestado / leads, por campaña.',
-    fn:(campanas)=>campanas.map(r=>({
-      campana:r.campana,
-      tasa_presup:r.leads?r.presupuestos/r.leads:0,
-      ticket:r.leads?Math.round(r.monto_presup/r.leads):0
-    }))
-  });
-
-  dash.calc('ranking',{
-    inputs:['operadores'],
-    title:'Puntaje de atención',
-    description:'Velocidad 35%, calidad 40%, seguimiento 15%, volumen 10%.',
-    fn:(operadores)=>{
-      const mx=Math.max(...operadores.map(o=>o.conv));
-      return operadores.map(o=>{
-        const vel=0.5*o.pct_le15+0.5*Math.max(0,100-4*o.med_resp);
-        const cal=(o.saludo+o.pide_nombre+o.pide_medida+o.cotiza+o.invita_cierre)/5;
-        const vol=100*o.conv/mx;
-        const p={velocidad:0.35*vel,calidad:0.40*cal,seguimiento:0.15*o.seguimiento,volumen:0.10*vol};
-        return {operador:o.operador,...p,puntaje:Math.round(p.velocidad+p.calidad+p.seguimiento+p.volumen)};
-      }).sort((a,b)=>b.puntaje-a.puntaje);
-    }
-  });
+  dash.calc('camp_calc',{inputs:['campanas'],title:'Tasa de presupuesto por campaña',description:'Presupuestos / leads y monto presupuestado / leads, por campaña.',
+    fn:(campanas)=>campanas.map(r=>({campana:r.campana,tasa_presup:r.leads?r.presupuestos/r.leads:0,ticket:r.leads?Math.round(r.monto_presup/r.leads):0}))});
+  dash.calc('ranking',{inputs:['operadores'],title:'Puntaje de atención',description:'Velocidad 35% (mitad % ≤15 min, mitad 100−4×mediana), calidad 40% (promedio de los 5 pasos del guion), seguimiento 15%, volumen 10% (conv. / máximo).',
+    fn:(operadores)=>{const mx=Math.max(...operadores.map(o=>o.conv));return operadores.map(o=>{const vel=0.5*o.pct_le15+0.5*Math.max(0,100-4*o.med_resp);const cal=(o.saludo+o.pide_nombre+o.pide_medida+o.cotiza+o.invita_cierre)/5;const vol=100*o.conv/mx;const p={velocidad:0.35*vel,calidad:0.40*cal,seguimiento:0.15*o.seguimiento,volumen:0.10*vol};return {operador:o.operador,...p,puntaje:Math.round(p.velocidad+p.calidad+p.seguimiento+p.volumen)};}).sort((a,b)=>b.puntaje-a.puntaje);}});
 })();
-</script>
 
-<script>
 (function(){
   const {fmtN,money}=window.__nx;
-  const fm={
-    leads:fmtN,leads_ads:fmtN,first_med:v=>v+' min',first_p90:v=>String(v),
-    first_le15:v=>v+'%',ooh:fmtN,ooh_wait_h:v=>String(v),quote_amt:money,
-    quotes_odoo:fmtN,cold_quoted:fmtN,quoted:fmtN
-  };
-
+  const fm={leads:fmtN,leads_ads:fmtN,first_med:v=>v+' min',first_p90:v=>String(v),first_le15:v=>v+'%',ooh:fmtN,ooh_wait_h:v=>String(v),quote_amt:money,quotes_odoo:fmtN,cold_quoted:fmtN,quoted:fmtN};
   dash.onData(()=>{
     const k=dash.data('kpis');
     document.querySelectorAll('#dash-root [data-source=kpis][data-where]').forEach(el=>{
       if(k.status!=='ok'){el.textContent='—';return;}
-      const m=el.getAttribute('data-where').split('=')[1];
-      const r=k.data.find(x=>x.metric===m);
-      el.textContent=r?(fm[m]||String)(Number(r.value)):'—';
-      el.classList.remove('dash-skeleton');
+      const m=el.getAttribute('data-where').split('=')[1];const r=k.data.find(x=>x.metric===m);
+      el.textContent=r?(fm[m]||String)(Number(r.value)):'—';el.classList.remove('dash-skeleton');
     });
-
     const t=document.getElementById('takeaway');
-    if(k.status==='ok'){
-      const g=m=>Number(k.data.find(x=>x.metric===m).value);
-      t.textContent=`Atención rápida en horario hábil, pero fuga de conversión en el cierre: ${g('cold_quoted')} de ${g('quoted')} conversaciones cotizadas no registraron un segundo contacto de seguimiento.`;
-    } else t.textContent='—';
+    if(k.status==='ok'){const g=m=>Number(k.data.find(x=>x.metric===m).value);
+      t.textContent=`Se responde rápido en horario, pero se pierde la venta después: ${g('cold_quoted')} de ${g('quoted')} conversaciones cotizadas quedaron sin seguimiento y ${g('ooh')} leads llegaron fuera de horario.`;}
+    else t.textContent='—';
   });
 })();
-</script>
 
-<script>
 (function(){
   const {fmtN,money}=window.__nx;
-
-  function tip(box){
-    let t=box.querySelector('.tip');
-    if(!t){
-      t=document.createElement('div');
-      t.className='tip';
-      t.hidden=true;
-      box.appendChild(t);
-    }
-    return t;
-  }
-
-  function place(t,box,ev){
-    const r=box.getBoundingClientRect();
-    let x=ev.clientX-r.left+12,y=ev.clientY-r.top+12;
-    t.hidden=false;
-    const w=t.offsetWidth;
-    if(x+w>r.width)x=Math.max(0,ev.clientX-r.left-w-12);
-    t.style.left=x+'px';
-    t.style.top=y+'px';
-  }
-
-  function fill(el,lines){
-    el.textContent='';
-    lines.forEach((l,i)=>{
-      const d=document.createElement('div');
-      if(i===0)d.className='h';
-      if(l.c){
-        const s=document.createElement('i');
-        s.style.cssText=`display:inline-block;width:.55rem;height:.55rem;border-radius:2px;margin-right:.3rem;background:${l.c}`;
-        d.appendChild(s);
-      }
-      d.appendChild(document.createTextNode(l.t));
-      el.appendChild(d);
-    });
-  }
-
-  function failed(el,st){
-    el.textContent='';
-    if(st==='error'){
-      el.style.display='flex';
-      el.style.alignItems='center';
-      el.style.justifyContent='center';
-      const d=document.createElement('span');
-      d.style.cssText='width:.375rem;height:.375rem;border-radius:50%;background:var(--color-bad);margin-right:.4rem';
-      el.append(d,Object.assign(document.createElement('span'),{textContent:'Failed to load',style:'color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)'}));
-    }
-  }
-
-  function cleanAxis(g){
-    g.attr('font-size',null).attr('font-family',null);
-    g.selectAll('text').attr('fill','var(--color-fg-muted)').style('font-size','var(--cds-font-size-caption)');
-    g.selectAll('line').attr('stroke','var(--cds-chart-grid)');
-    g.select('.domain').attr('stroke','var(--cds-chart-axis)');
-  }
-
+  function tip(box){let t=box.querySelector('.tip');if(!t){t=document.createElement('div');t.className='tip';t.hidden=true;box.appendChild(t);}return t;}
+  function place(t,box,ev){const r=box.getBoundingClientRect();let x=ev.clientX-r.left+12,y=ev.clientY-r.top+12;t.hidden=false;const w=t.offsetWidth;if(x+w>r.width)x=Math.max(0,ev.clientX-r.left-w-12);t.style.left=x+'px';t.style.top=y+'px';}
+  function fill(el,lines){el.textContent='';lines.forEach((l,i)=>{const d=document.createElement('div');if(i===0)d.className='h';if(l.c){const s=document.createElement('i');s.style.cssText=`display:inline-block;width:.55rem;height:.55rem;border-radius:2px;margin-right:.3rem;background:${l.c}`;d.appendChild(s);}d.appendChild(document.createTextNode(l.t));el.appendChild(d);});}
+  function failed(el,st){el.textContent='';if(st==='error'){el.style.display='flex';el.style.alignItems='center';el.style.justifyContent='center';const d=document.createElement('span');d.style.cssText='width:.375rem;height:.375rem;border-radius:50%;background:var(--color-bad);margin-right:.4rem';el.append(d,Object.assign(document.createElement('span'),{textContent:'Failed to load',style:'color:var(--color-fg-muted);font-size:var(--cds-font-size-caption)'}));}}
+  function cleanAxis(g){g.attr('font-size',null).attr('font-family',null);g.selectAll('text').attr('fill','var(--text-secondary)').style('font-size','var(--cds-font-size-caption)');g.selectAll('line').attr('stroke','var(--cds-chart-grid)');g.select('.domain').attr('stroke','var(--cds-chart-axis)');}
   const CAMP_ORDER=['4 cubiertas $40.000/mes (BNA)','Promo BNA','12 cuotas Mercado Pago','Financiación 12 cuotas s/interés','Banco Supervielle / ICBC','Naranja X (10–18 cuotas)','Catálogo de productos','Orgánico (sin anuncio)','Tren delantero + cubiertas'];
 
   function daily(){
-    const el=document.getElementById('chDaily'),lg=document.getElementById('legDaily');
-    const d=dash.data('leads_diarios');
+    const el=document.getElementById('chDaily'),lg=document.getElementById('legDaily');const d=dash.data('leads_diarios');
     if(d.status!=='ok'){failed(el,d.status);lg.textContent='';return;}
     el.classList.remove('dash-skeleton');el.style.display='';
-
     const rows=d.data.map(r=>({dia:String(r.dia).slice(0,10),campana:r.campana,leads:Number(r.leads)}));
-    const days=[...new Set(rows.map(r=>r.dia))].sort();
-    const keys=CAMP_ORDER.filter(c=>rows.some(r=>r.campana===c));
-    const col=c=>{
-      const i=keys.indexOf(c);
-      return i<dash.colors.length?dash.colors[i]:'var(--color-fg-muted)';
-    };
-
-    lg.textContent='';
-    keys.forEach(c=>{
-      const s=document.createElement('span');
-      const i=document.createElement('i');
-      i.style.background=col(c);
-      s.append(i,document.createTextNode(c));
-      lg.appendChild(s);
-    });
-
-    const wide=days.map(dd=>{
-      const o={dia:dd};
-      keys.forEach(k=>o[k]=0);
-      rows.filter(r=>r.dia===dd).forEach(r=>o[r.campana]+=r.leads);
-      return o;
-    });
-
+    const days=[...new Set(rows.map(r=>r.dia))].sort();const keys=CAMP_ORDER.filter(c=>rows.some(r=>r.campana===c));
+    const col=c=>{const i=keys.indexOf(c);return i<8?dash.colors[i]:'var(--text-muted)';};
+    lg.textContent='';keys.forEach(c=>{const s=document.createElement('span');const i=document.createElement('i');i.style.background=col(c);s.append(i,document.createTextNode(c));lg.appendChild(s);});
+    const wide=days.map(dd=>{const o={dia:dd};keys.forEach(k=>o[k]=0);rows.filter(r=>r.dia===dd).forEach(r=>o[r.campana]+=r.leads);return o;});
     const st=d3.stack().keys(keys)(wide);
     const W=el.clientWidth||600,H=240,m={t:8,r:8,b:24,l:28};
     el.querySelectorAll('svg').forEach(s=>s.remove());
     const svg=d3.select(el).append('svg').attr('width','100%').attr('viewBox',`0 0 ${W} ${H}`);
-
-    const x=d3.scaleBand(days,[m.l,W-m.r]).padding(.25);
-    const ymax=d3.max(wide,o=>d3.sum(keys,k=>o[k]));
-    const y=d3.scaleLinear([0,ymax],[H-m.b,m.t]).nice();
-
-    const ga=svg.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickSize(-(W-m.l-m.r)));
-    cleanAxis(ga);ga.select('.domain').remove();
-
-    const fmtD=d3.utcFormat('%-d/%-m');
-    const step=Math.ceil(days.length/(W<450?5:14));
-    const gx=svg.append('g').attr('transform',`translate(0,${H-m.b})`).call(d3.axisBottom(x).tickValues(days.filter((_,i)=>i%step===0)).tickFormat(s=>fmtD(new Date(s))).tickSize(0).tickPadding(6));
-    cleanAxis(gx);
-
+    const x=d3.scaleBand(days,[m.l,W-m.r]).padding(.25);const ymax=d3.max(wide,o=>d3.sum(keys,k=>o[k]));const y=d3.scaleLinear([0,ymax],[H-m.b,m.t]).nice();
+    const ga=svg.append('g').attr('transform',`translate(${m.l},0)`).call(d3.axisLeft(y).ticks(5).tickSize(-(W-m.l-m.r)));cleanAxis(ga);ga.select('.domain').remove();
+    const fmtD=d3.utcFormat('%-d/%-m');const step=Math.ceil(days.length/(W<450?5:14));
+    const gx=svg.append('g').attr('transform',`translate(0,${H-m.b})`).call(d3.axisBottom(x).tickValues(days.filter((_,i)=>i%step===0)).tickFormat(s=>fmtD(new Date(s))).tickSize(0).tickPadding(6));cleanAxis(gx);
     const t=tip(el);
-    svg.append('g').selectAll('g').data(st).join('g').attr('fill',s=>col(s.key))
-      .selectAll('rect').data(s=>s.map(p=>Object.assign(p,{key:s.key}))).join('rect')
+    svg.append('g').selectAll('g').data(st).join('g').attr('fill',s=>col(s.key)).selectAll('rect').data(s=>s.map(p=>Object.assign(p,{key:s.key}))).join('rect')
       .attr('x',p=>x(p.data.dia)).attr('width',x.bandwidth()).attr('y',p=>y(p[1])).attr('height',p=>Math.max(0,y(p[0])-y(p[1])))
-      .on('mousemove',(ev,p)=>{
-        const o=p.data;
-        fill(t,[{t:fmtD(new Date(o.dia))+' · '+d3.sum(keys,k=>o[k])+' leads'},...keys.filter(k=>o[k]).map(k=>({c:col(k),t:k+': '+o[k]}))]);
-        place(t,el,ev);
-      }).on('mouseleave',()=>t.hidden=true);
+      .on('mousemove',(ev,p)=>{const o=p.data;fill(t,[{t:fmtD(new Date(o.dia))+' · '+d3.sum(keys,k=>o[k])+' leads'},...keys.filter(k=>o[k]).map(k=>({c:col(k),t:k+': '+o[k]}))]);place(t,el,ev);}).on('mouseleave',()=>t.hidden=true);
   }
 
   function campTable(){
-    const tb=document.querySelector('#tCamp tbody');
-    const d=dash.data('campanas'),c=dash.data('camp_calc');
-    tb.textContent='';
-    if(d.status!=='ok')return;
-    const cc=c.status==='ok'?c.data:[];
-
-    d.data.slice().sort((a,b)=>b.leads-a.leads).forEach(r=>{
-      const k=cc.find(x=>x.campana===r.campana)||{};
-      const tr=document.createElement('tr');
+    const tb=document.querySelector('#tCamp tbody');const d=dash.data('campanas'),c=dash.data('camp_calc');tb.textContent='';
+    if(d.status!=='ok')return;const cc=c.status==='ok'?c.data:[];
+    d.data.slice().sort((a,b)=>b.leads-a.leads).forEach(r=>{const k=cc.find(x=>x.campana===r.campana)||{};const tr=document.createElement('tr');
       const cells=[r.campana,r.formato,fmtN(r.leads),String(r.med_primera),fmtN(r.presupuestos),k.tasa_presup!=null?d3.format('.0%')(k.tasa_presup):'—',money(r.monto_presup),k.ticket!=null?money(k.ticket):'—'];
-      cells.forEach((v,i)=>{
-        const td=document.createElement('td');
-        td.textContent=v;
-        if(i===5&&k.tasa_presup!=null)td.className=k.tasa_presup>=.45?'ok':k.tasa_presup<.25?'bad':'';
-        tr.appendChild(td);
-      });
-      tb.appendChild(tr);
-    });
+      cells.forEach((v,i)=>{const td=document.createElement('td');td.textContent=v;if(i===5&&k.tasa_presup!=null)td.className=k.tasa_presup>=.45?'ok':k.tasa_presup<.25?'bad':'';tr.appendChild(td);});tb.appendChild(tr);});
   }
 
   function rank(){
-    const el=document.getElementById('chRank'),lg=document.getElementById('legRank');
-    const d=dash.data('ranking');
+    const el=document.getElementById('chRank'),lg=document.getElementById('legRank');const d=dash.data('ranking');
     if(d.status!=='ok'){failed(el,d.status);lg.textContent='';return;}
     el.style.display='';
-
     const parts=[['velocidad','Velocidad'],['calidad','Calidad'],['seguimiento','Seguimiento'],['volumen','Volumen']];
-    lg.textContent='';
-    parts.forEach(([k,n],i)=>{
-      const s=document.createElement('span');
-      const ii=document.createElement('i');
-      ii.style.background=dash.colors[i];
-      s.append(ii,document.createTextNode(n));
-      lg.appendChild(s);
-    });
-
-    const rows=d.data;
-    const W=el.clientWidth||500,bh=26,gap=12,H=rows.length*(bh+gap)+20;
+    lg.textContent='';parts.forEach(([k,n],i)=>{const s=document.createElement('span');const ii=document.createElement('i');ii.style.background=dash.colors[i];s.append(ii,document.createTextNode(n));lg.appendChild(s);});
+    const rows=d.data;const W=el.clientWidth||500,bh=26,gap=12,H=rows.length*(bh+gap)+20;
     el.querySelectorAll('svg').forEach(s=>s.remove());
     const svg=d3.select(el).append('svg').attr('width','100%').attr('viewBox',`0 0 ${W} ${H}`);
-
-    const names=svg.append('g');
-    const lbls=rows.map((r,i)=>names.append('text').text((i+1)+'. '+r.operador).attr('y',i*(bh+gap)+bh/2+4).attr('fill','var(--color-fg)').style('font-size','var(--cds-font-size-caption)'));
+    const names=svg.append('g');const lbls=rows.map((r,i)=>names.append('text').text((i+1)+'. '+r.operador).attr('y',i*(bh+gap)+bh/2+4).attr('fill','#fff').style('font-size','var(--cds-font-size-caption)'));
     const lw=d3.max(lbls,t=>t.node().getComputedTextLength())+10;
-
-    const x=d3.scaleLinear([0,100],[lw,W-36]);
-    const t=tip(el);
-
-    rows.forEach((r,i)=>{
-      let acc=0;
-      const g=svg.append('g');
-      parts.forEach(([k,n],j)=>{
-        const v=r[k];
-        g.append('rect').attr('x',x(acc)).attr('y',i*(bh+gap)).attr('height',bh).attr('width',Math.max(0,x(acc+v)-x(acc))).attr('fill',dash.colors[j])
-          .on('mousemove',ev=>{
-            fill(t,[{t:r.operador+' · '+r.puntaje+' pts'},...parts.map(([kk,nn],jj)=>({c:dash.colors[jj],t:nn+': '+r[kk].toFixed(1)}))]);
-            place(t,el,ev);
-          }).on('mouseleave',()=>t.hidden=true);
-        acc+=v;
-      });
-      svg.append('text').attr('x',x(acc)+6).attr('y',i*(bh+gap)+bh/2+5).text(r.puntaje).attr('fill','var(--color-fg)').style('font-weight','700').style('font-size','var(--cds-font-size-body)');
-    });
+    const x=d3.scaleLinear([0,100],[lw,W-36]);const t=tip(el);
+    rows.forEach((r,i)=>{let acc=0;const g=svg.append('g');parts.forEach(([k,n],j)=>{const v=r[k];g.append('rect').attr('x',x(acc)).attr('y',i*(bh+gap)).attr('height',bh).attr('width',Math.max(0,x(acc+v)-x(acc))).attr('fill',dash.colors[j])
+        .on('mousemove',ev=>{fill(t,[{t:r.operador+' · '+r.puntaje+' pts'},...parts.map(([kk,nn],jj)=>({c:dash.colors[jj],t:nn+': '+r[kk].toFixed(1)}))]);place(t,el,ev);}).on('mouseleave',()=>t.hidden=true);acc+=v;});
+      svg.append('text').attr('x',x(acc)+6).attr('y',i*(bh+gap)+bh/2+5).text(r.puntaje).attr('fill','#fff').style('font-weight','700').style('font-size','var(--cds-font-size-body)');});
   }
 
   function opsTables(){
-    const d=dash.data('operadores');
-    const t1=document.querySelector('#tOps tbody'),t2=document.querySelector('#tQual tbody');
-    t1.textContent='';t2.textContent='';
-    if(d.status!=='ok')return;
-
+    const d=dash.data('operadores');const t1=document.querySelector('#tOps tbody'),t2=document.querySelector('#tQual tbody');t1.textContent='';t2.textContent='';if(d.status!=='ok')return;
     const rows=d.data.slice().sort((a,b)=>b.conv-a.conv);
-    const tr=(tb,vals,cls)=>{
-      const r=document.createElement('tr');
-      vals.forEach((v,i)=>{
-        const td=document.createElement('td');
-        td.textContent=v;
-        if(cls&&cls[i])td.className=cls[i];
-        r.appendChild(td);
-      });
-      tb.appendChild(r);
-    };
-
+    const tr=(tb,vals,cls)=>{const r=document.createElement('tr');vals.forEach((v,i)=>{const td=document.createElement('td');td.textContent=v;if(cls&&cls[i])td.className=cls[i];r.appendChild(td);});tb.appendChild(r);};
     const lvl=(v,good,bad,inv)=>inv?(v<=good?'ok':v>=bad?'bad':''):(v>=good?'ok':v<=bad?'bad':'');
-
     rows.forEach(o=>{
       tr(t1,[o.operador,fmtN(o.conv),o.med_primera+' min',o.med_resp+' min',o.p90_resp+' min',o.pct_le15+'%',o.pct_gt60+'%',fmtN(o.presup),money(o.monto_presup)],[null,null,lvl(o.med_primera,8,15,1),lvl(o.med_resp,5,15,1),lvl(o.p90_resp,30,60,1),lvl(o.pct_le15,80,50),lvl(o.pct_gt60,3,10,1)]);
       tr(t2,[o.operador,o.saludo+'%',o.pide_nombre+'%',o.pide_medida+'%',o.cotiza+'%',o.invita_cierre+'%',o.seguimiento+'%',String(o.msgs_conv)],[null,lvl(o.saludo,80,50),lvl(o.pide_nombre,80,50),lvl(o.pide_medida,60,30),lvl(o.cotiza,60,40),lvl(o.invita_cierre,50,20),lvl(o.seguimiento,40,10)]);
@@ -821,79 +562,37 @@ const __D={"kpis":[{"metric":"leads","label":"Conversaciones nuevas","value":315
   }
 
   function hour(){
-    const el=document.getElementById('chHour');
-    const d=dash.data('respuesta_hora');
-    if(d.status!=='ok'){failed(el,d.status);return;}
-    el.style.display='';
-
-    const rows=d.data.map(r=>({h:Number(r.hora),n:Number(r.respuestas),m:Number(r.med_min)}));
-    const hrs=d3.range(0,24);
-    const W=el.clientWidth||500,H=240,mg={t:8,r:8,b:24,l:28};
-    el.querySelectorAll('svg').forEach(s=>s.remove());
-
+    const el=document.getElementById('chHour');const d=dash.data('respuesta_hora');if(d.status!=='ok'){failed(el,d.status);return;}el.style.display='';
+    const rows=d.data.map(r=>({h:Number(r.hora),n:Number(r.respuestas),m:Number(r.med_min)}));const hrs=d3.range(0,24);
+    const W=el.clientWidth||500,H=240,mg={t:8,r:8,b:24,l:28};el.querySelectorAll('svg').forEach(s=>s.remove());
     const svg=d3.select(el).append('svg').attr('width','100%').attr('viewBox',`0 0 ${W} ${H}`);
-    const x=d3.scaleBand(hrs,[mg.l,W-mg.r]).padding(.2);
-    const y=d3.scaleLinear([0,d3.max(rows,r=>r.m)],[H-mg.b,mg.t]).nice();
-
-    const ga=svg.append('g').attr('transform',`translate(${mg.l},0)`).call(d3.axisLeft(y).ticks(4).tickSize(-(W-mg.l-mg.r)));
-    cleanAxis(ga);ga.select('.domain').remove();
-
-    const gx=svg.append('g').attr('transform',`translate(0,${H-mg.b})`).call(d3.axisBottom(x).tickValues(hrs.filter(h=>h%3===0)).tickFormat(h=>h+'h').tickSize(0).tickPadding(6));
-    cleanAxis(gx);
-
-    const inH=h=>h>=8&&h<18;
-    const t=tip(el);
-
-    svg.append('g').selectAll('rect').data(rows).join('rect')
-      .attr('x',r=>x(r.h)).attr('width',x.bandwidth()).attr('y',r=>y(r.m)).attr('height',r=>y(0)-y(r.m)).attr('rx',3)
-      .attr('fill',r=>inH(r.h)?dash.colors[0]:'var(--cds-chart-status-critical)')
-      .on('mousemove',(ev,r)=>{
-        fill(t,[{t:r.h+':00–'+r.h+':59 · '+(inH(r.h)?'en horario':'fuera de horario')},{t:'Mediana: '+r.m+' min hábiles'},{t:fmtN(r.n)+' respuestas'}]);
-        place(t,el,ev);
-      }).on('mouseleave',()=>t.hidden=true);
+    const x=d3.scaleBand(hrs,[mg.l,W-mg.r]).padding(.2);const y=d3.scaleLinear([0,d3.max(rows,r=>r.m)],[H-mg.b,mg.t]).nice();
+    const ga=svg.append('g').attr('transform',`translate(${mg.l},0)`).call(d3.axisLeft(y).ticks(4).tickSize(-(W-mg.l-mg.r)));cleanAxis(ga);ga.select('.domain').remove();
+    const gx=svg.append('g').attr('transform',`translate(0,${H-mg.b})`).call(d3.axisBottom(x).tickValues(hrs.filter(h=>h%3===0)).tickFormat(h=>h+'h').tickSize(0).tickPadding(6));cleanAxis(gx);
+    const inH=h=>h>=8&&h<18;const t=tip(el);
+    svg.append('g').selectAll('rect').data(rows).join('rect').attr('x',r=>x(r.h)).attr('width',x.bandwidth()).attr('y',r=>y(r.m)).attr('height',r=>y(0)-y(r.m)).attr('rx',3)
+      .attr('fill',r=>inH(r.h)?dash.colors[1]:'var(--cds-chart-status-critical)')
+      .on('mousemove',(ev,r)=>{fill(t,[{t:r.h+':00–'+r.h+':59 · '+(inH(r.h)?'en horario':'fuera de horario')},{t:'Mediana: '+r.m+' min hábiles'},{t:fmtN(r.n)+' respuestas'}]);place(t,el,ev);}).on('mouseleave',()=>t.hidden=true);
   }
 
   function heat(){
-    const el=document.getElementById('chHeat');
-    const d=dash.data('calor');
-    if(d.status!=='ok'){failed(el,d.status);return;}
-    el.style.display='';
-
+    const el=document.getElementById('chHeat');const d=dash.data('calor');if(d.status!=='ok'){failed(el,d.status);return;}el.style.display='';
     const rows=d.data.map(r=>({w:Number(r.dia_semana),h:Number(r.hora),n:Number(r.mensajes)}));
-    const order=[1,2,3,4,5,6,0],names=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-    const hrs=d3.range(0,24);
-    const W=el.clientWidth||500,H=240,mg={t:4,r:4,b:22,l:34};
-    el.querySelectorAll('svg').forEach(s=>s.remove());
-
+    const order=[1,2,3,4,5,6,0],names=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];const hrs=d3.range(0,24);
+    const W=el.clientWidth||500,H=240,mg={t:4,r:4,b:22,l:34};el.querySelectorAll('svg').forEach(s=>s.remove());
     const svg=d3.select(el).append('svg').attr('width','100%').attr('viewBox',`0 0 ${W} ${H}`);
-    const x=d3.scaleBand(hrs,[mg.l,W-mg.r]).padding(.08);
-    const y=d3.scaleBand(order,[mg.t,H-mg.b]).padding(.08);
-
-    const bg=getComputedStyle(el).getPropertyValue('--color-panel').trim()||'#151c2c';
-    const c0=d3.interpolateRgb(bg,dash.colors[1]); // Uso del rojo Neumar para mapa de calor
-    const mx=d3.max(rows,r=>r.n);
-    const map=new Map(rows.map(r=>[r.w+'-'+r.h,r.n]));
-    const t=tip(el);
-
-    const cells=[];
-    order.forEach(w=>hrs.forEach(h=>cells.push({w,h,n:map.get(w+'-'+h)||0})));
-
-    svg.append('g').selectAll('rect').data(cells).join('rect')
-      .attr('x',c=>x(c.h)).attr('y',c=>y(c.w)).attr('width',x.bandwidth()).attr('height',y.bandwidth()).attr('rx',2)
+    const x=d3.scaleBand(hrs,[mg.l,W-mg.r]).padding(.08),y=d3.scaleBand(order,[mg.t,H-mg.b]).padding(.08);
+    const bg='#091325';const c0=d3.interpolateRgb(bg,dash.colors[0]);
+    const mx=d3.max(rows,r=>r.n);const map=new Map(rows.map(r=>[r.w+'-'+r.h,r.n]));const t=tip(el);
+    const cells=[];order.forEach(w=>hrs.forEach(h=>cells.push({w,h,n:map.get(w+'-'+h)||0})));
+    svg.append('g').selectAll('rect').data(cells).join('rect').attr('x',c=>x(c.h)).attr('y',c=>y(c.w)).attr('width',x.bandwidth()).attr('height',y.bandwidth()).attr('rx',2)
       .attr('fill',c=>c.n?c0(.15+.85*Math.sqrt(c.n/mx)):'var(--cds-chart-grid)')
-      .on('mousemove',(ev,c)=>{
-        fill(t,[{t:names[c.w]+' '+c.h+':00'},{t:fmtN(c.n)+' mensajes'}]);
-        place(t,el,ev);
-      }).on('mouseleave',()=>t.hidden=true);
-
-    const gy=svg.append('g').attr('transform',`translate(${mg.l},0)`).call(d3.axisLeft(y).tickFormat(w=>names[w]).tickSize(0).tickPadding(4));
-    cleanAxis(gy);gy.select('.domain').remove();
-
-    const gx=svg.append('g').attr('transform',`translate(0,${H-mg.b})`).call(d3.axisBottom(x).tickValues(hrs.filter(h=>h%3===0)).tickFormat(h=>h+'h').tickSize(0).tickPadding(6));
-    cleanAxis(gx);gx.select('.domain').remove();
+      .on('mousemove',(ev,c)=>{fill(t,[{t:names[c.w]+' '+c.h+':00'},{t:fmtN(c.n)+' mensajes'}]);place(t,el,ev);}).on('mouseleave',()=>t.hidden=true);
+    const gy=svg.append('g').attr('transform',`translate(${mg.l},0)`).call(d3.axisLeft(y).tickFormat(w=>names[w]).tickSize(0).tickPadding(4));cleanAxis(gy);gy.select('.domain').remove();
+    const gx=svg.append('g').attr('transform',`translate(0,${H-mg.b})`).call(d3.axisBottom(x).tickValues(hrs.filter(h=>h%3===0)).tickFormat(h=>h+'h').tickSize(0).tickPadding(6));cleanAxis(gx);gx.select('.domain').remove();
   }
 
-  dash.onData(()=>{ daily(); campTable(); rank(); opsTables(); hour(); heat(); });
+  dash.onData(()=>{daily();campTable();rank();opsTables();hour();heat();});
 })();
 </script>
 
